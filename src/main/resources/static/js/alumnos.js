@@ -16,7 +16,7 @@ function initAlumnos() {
 }
 
 document.addEventListener("vista-cargada", (e) => {
-  if (e.detail.includes("alumno.html")) {
+  if (e.detail.includes("alumnos.html")) {
     initAlumnos();
   }
 });
