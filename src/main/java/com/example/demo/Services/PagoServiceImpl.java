@@ -28,8 +28,7 @@ public class PagoServiceImpl implements PagoService {
     }
 
     @Override
-    @Transactional
-    public ReciboDetalleDTO procesarPago(PagoDTO pagoDTO) {
+    @Transactional    public ReciboDetalleDTO procesarPago(PagoDTO pagoDTO) {
 
         Cuota cuota = cuotaRepository.findById(pagoDTO.getIdCuota())
                 .orElseThrow(() -> new RuntimeException("Cuota no encontrada"));
@@ -49,15 +48,47 @@ public class PagoServiceImpl implements PagoService {
 
         Recibo recibo = new Recibo();
         recibo.setCuota(cuota);
-        recibo.setAlumno(cuota.getMatricula().getAlumno()); // Obtenemos alumno desde la matrícula
+        recibo.setAlumno(cuota.getMatricula().getAlumno());
         recibo.setNumeroRecibo(nuevoNumeroRecibo);
         recibo.setFechaPago(LocalDateTime.now());
         recibo.setMontoTotal(pagoDTO.getMontoPago());
         recibo.setMetodoPago(pagoDTO.getMetodoPago());
+        recibo.setAnulado(false); //nace no anulado
 
         Recibo reciboGuardado = reciboRepository.save(recibo);
 
         return mapToDTO(reciboGuardado);
+    }
+
+    @Override
+    public ReciboDetalleDTO buscarReciboPorNumero(String numeroRecibo) {
+        Recibo recibo = reciboRepository.findByNumeroRecibo(numeroRecibo)
+                .orElseThrow(() -> new RuntimeException("Recibo no encontrado con el número: " + numeroRecibo));
+
+        return mapToDTO(recibo);
+    }
+
+    @Override
+    @Transactional    public void anularRecibo(String numeroRecibo) {
+        // 1. Buscar el recibo
+        Recibo recibo = reciboRepository.findByNumeroRecibo(numeroRecibo)
+                .orElseThrow(() -> new RuntimeException("Recibo no encontrado"));
+
+        // 2. Validar que no esté ya anulado
+        if (recibo.isAnulado()) {
+            throw new RuntimeException("Este recibo ya se encuentra anulado.");
+        }
+
+        // 3. Recuperar la cuota asociada
+        Cuota cuota = recibo.getCuota();
+
+        // 4. Revertir el estado de la cuota a DEBE (para que se pueda volver a cobrar)
+        cuota.setEstado(EstadoCuota.DEBE);
+        cuotaRepository.save(cuota);
+
+        // 5. Marcar recibo como anulado
+        recibo.setAnulado(true);
+        reciboRepository.save(recibo);
     }
 
     private String generarProximoNumeroRecibo() {
@@ -69,7 +100,6 @@ public class PagoServiceImpl implements PagoService {
             long correlativoActual = Long.parseLong(partes[1]);
             long nuevoCorrelativo = correlativoActual + 1;
 
-            // Formateamos a 7 dígitos con ceros a la izquierda
             return String.format("%s-%07d", SERIE_RECIBO, nuevoCorrelativo);
         } else {
             return SERIE_RECIBO + "-0000001";
@@ -82,9 +112,11 @@ public class PagoServiceImpl implements PagoService {
         dto.setFechaPago(recibo.getFechaPago());
         dto.setMontoPagado(recibo.getMontoTotal());
 
+        // descifrar la logica de cifrado del alumno
         dto.setNombreAlumno(recibo.getAlumno().getNombre() + " " + recibo.getAlumno().getApellido());
 
         dto.setConcepto(recibo.getCuota().getDescripcion());
+
         return dto;
     }
 }

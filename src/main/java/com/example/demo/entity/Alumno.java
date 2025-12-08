@@ -21,7 +21,7 @@ public class Alumno {
 
     // DNI ALUMNO
     @Column(name = "dniAlumno")
-    private int dniAlumno;
+    private Integer dniAlumno;
 
     //ID DEL ALUMNO 
     @Id
@@ -46,7 +46,7 @@ public class Alumno {
     @Column(name = "estado_actual", nullable = false)
     private EstadoAlumno estadoActual = EstadoAlumno.Activo;
 
-    @OneToMany(mappedBy = "id_Matricula")
+    @OneToMany(mappedBy = "alumno")
     private List<Matricula> Matricula;
 
 

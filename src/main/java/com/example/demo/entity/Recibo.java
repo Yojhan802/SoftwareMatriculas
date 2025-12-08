@@ -43,5 +43,7 @@ public class Recibo {
     @Column(name = "metodo_pago", length = 50)
     private String metodoPago;
 
-
+    @Column(name = "anulado", nullable = false)
+    private boolean anulado = false;
+    // Se inicializa en 'false' para que por defecto el recibo sea válido
 }
