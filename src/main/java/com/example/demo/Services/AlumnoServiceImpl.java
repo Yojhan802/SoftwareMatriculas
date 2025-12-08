@@ -34,7 +34,8 @@ public class AlumnoServiceImpl implements AlumnoService {
         AlumnoDTO dto = new AlumnoDTO();
         dto.setDniAlumno(alumno.getDniAlumno());
         dto.setIdAlumno(alumno.getId_Alumno());
-        dto.setApellido(alumno.getApellido());
+        dto.setNombre(decifrar(alumno.getNombre(), "ClaveSecreta"));
+        dto.setApellido(decifrar(alumno.getApellido(), "ClaveSecreta"));
         dto.setDireccion(alumno.getDireccion());
         dto.setEstadoActual(alumno.getEstadoActual());
         return dto;
@@ -42,11 +43,12 @@ public class AlumnoServiceImpl implements AlumnoService {
     }
 
     public Alumno mapToEntity(AlumnoDTO alumnoDTO) {
+        System.out.println(alumnoDTO);
         Alumno alumno = new Alumno();
         alumno.setDniAlumno(alumnoDTO.getDniAlumno());
         alumno.setId_Alumno(alumnoDTO.getIdAlumno());
-        alumno.setNombre(cifrar(alumnoDTO.getNombre(), ""));
-        alumno.setApellido(cifrar(alumnoDTO.getApellido(), ""));
+        alumno.setNombre(cifrar(alumnoDTO.getNombre(), "ClaveSecreta"));
+        alumno.setApellido(cifrar(alumnoDTO.getApellido(), "ClaveSecreta"));
         alumno.setDireccion(alumnoDTO.getDireccion());
         alumno.setEstadoActual(alumnoDTO.getEstadoActual());
 
@@ -84,8 +86,8 @@ public class AlumnoServiceImpl implements AlumnoService {
         Alumno alumno = alumnoRepository.findByDniAlumno(dni)
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
-        alumno.setNombre(cifrar(alumnoDTO.getNombre(), ""));
-        alumno.setApellido(cifrar(alumnoDTO.getApellido(), ""));
+        alumno.setNombre(cifrar(alumnoDTO.getNombre(), "ClaveSecreta"));
+        alumno.setApellido(cifrar(alumnoDTO.getApellido(), "ClaveSecreta"));
         alumno.setDireccion(alumnoDTO.getDireccion());
         alumno.setEstadoActual(alumnoDTO.getEstadoActual());
 
@@ -96,15 +98,19 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     @Override
     public void eliminarAlumno(int dni) {
-        if (!alumnoRepository.existsById(dni)) {
+        if (alumnoRepository.findByDniAlumno(dni) == null) {
             throw new RuntimeException("Alumno no encontrado");
         }
+        Alumno alu = alumnoRepository.findByDniAlumno(dni)
+                .orElseThrow(() -> new RuntimeException("No encontrado"));
 
-        alumnoRepository.deleteById(dni);
+        alumnoRepository.deleteById(alu.getId_Alumno());
     }
 
     public static String cifrar(String encryptText, String key) {
-
+        System.out.println("=========================================================");
+        System.out.println(encryptText);
+        System.out.println(key);
         if (encryptText == null || key == null) {
             throw new IllegalArgumentException("No se puede cifrar valores nulos");
         }

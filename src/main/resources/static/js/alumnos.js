@@ -78,12 +78,12 @@ function renderizarTablaConPaginacion() {
 
     body.innerHTML += `
       <tr>
-        <td>${alumno.idAlumno}</td>
+        <td>${alumno.IdAlumno}</td>
         <td>${alumno.dniAlumno}</td>
-        <td>${alumno.nombre ?? ""}</td>
-        <td>${alumno.apellido ?? ""}</td>
-        <td>${alumno.direccion ?? ""}</td>
-        <td><span class="${estadoClass}">${alumno.estadoActual}</span></td>
+        <td>${alumno.Nombre ?? ""}</td>
+        <td>${alumno.Apellido ?? ""}</td>
+        <td>${alumno.Direccion ?? ""}</td>
+        <td><span class="${estadoClass}">${alumno.EstadoActual}</span></td>
         <td>
           <button class="btn btn-warning btn-sm" onclick="editarAlumno(${alumno.dniAlumno})">
             <i class="bi bi-pencil"></i> Editar
@@ -244,11 +244,11 @@ async function buscarAlumnoPorDni() {
 
     body.innerHTML = `
       <tr>
-        <td>${alumno.idAlumno}</td>
+        <td>${alumno.IdAlumno}</td>
         <td>${alumno.dniAlumno}</td>
-        <td>${alumno.nombre ?? ""}</td>
-        <td>${alumno.apellido ?? ""}</td>
-        <td>${alumno.direccion ?? ""}</td>
+        <td>${alumno.Nombre ?? ""}</td>
+        <td>${alumno.Apellido ?? ""}</td>
+        <td>${alumno.Direccion ?? ""}</td>
         <td><span class="${estadoClass}">${alumno.estadoActual}</span></td>
         <td>
           <button class="btn btn-warning btn-sm" onclick="editarAlumno(${alumno.dniAlumno})">
@@ -310,12 +310,12 @@ async function editarAlumno(dni) {
 
     document.getElementById("modalTituloAlumno").innerText = "Editar Alumno";
 
-    document.getElementById("alumnoId").value = alumno.idAlumno;
+    document.getElementById("alumnoId").value = alumno.IdAlumno;
     document.getElementById("dniAlumno").value = alumno.dniAlumno;
-    document.getElementById("nombre").value = alumno.nombre ?? "";
-    document.getElementById("apellido").value = alumno.apellido ?? "";
-    document.getElementById("direccion").value = alumno.direccion ?? "";
-    document.getElementById("estadoActual").value = alumno.estadoActual ?? "Activo";
+    document.getElementById("nombre").value = alumno.Nombre ?? "";
+    document.getElementById("apellido").value = alumno.Apellido ?? "";
+    document.getElementById("direccion").value = alumno.Direccion ?? "";
+    document.getElementById("estadoActual").value = alumno.EstadoActual ?? "Activo";
 
     document.getElementById("dniAlumno").disabled = true;
 
@@ -335,12 +335,12 @@ async function guardarAlumno() {
   const dni = parseInt(document.getElementById("dniAlumno").value);
 
   const alumno = {
-    idAlumno: id ? parseInt(id) : 0,
+    IdAlumno: id ? parseInt(id) : 0,
     dniAlumno: dni,
-    nombre: document.getElementById("nombre").value,
-    apellido: document.getElementById("apellido").value,
-    direccion: document.getElementById("direccion").value,
-    estadoActual: document.getElementById("estadoActual").value
+    Nombre: document.getElementById("nombre").value,
+    Apellido: document.getElementById("apellido").value,
+    Direccion: document.getElementById("direccion").value,
+    EstadoActual: document.getElementById("estadoActual").value
   };
 
   try {

@@ -1,18 +1,22 @@
-// auth.js - Manejo de autenticación y roles
+// auth.js - Versión modificada SIN auto-inicialización
 class AuthManager {
     constructor() {
         this.currentUser = null;
         this.role = null;
+        this._checkingPermission = false;
+        this._permissionCache = new Map();
     }
 
     // Verificar autenticación
     async checkAuth() {
         try {
+            console.log('AuthManager: Verificando autenticación...');
             const response = await fetch('/api/auth/user-info', {
                 credentials: 'include'
             });
             
             if (response.status === 401) {
+                console.log('AuthManager: No autenticado, redirigiendo...');
                 window.location.href = '/login.html';
                 return false;
             }
@@ -20,12 +24,14 @@ class AuthManager {
             if (response.ok) {
                 this.currentUser = await response.json();
                 this.role = this.currentUser.rol;
+                console.log('AuthManager: Usuario autenticado:', this.currentUser.nombreCompleto);
                 return true;
             }
             
+            console.log('AuthManager: Respuesta no OK:', response.status);
             return false;
         } catch (error) {
-            console.error('Error al verificar autenticación:', error);
+            console.error('AuthManager: Error al verificar autenticación:', error);
             window.location.href = '/login.html';
             return false;
         }
@@ -34,39 +40,68 @@ class AuthManager {
     // Obtener información del usuario
     async getUserInfo() {
         if (!this.currentUser) {
+            console.log('AuthManager: Obteniendo usuario por primera vez...');
             await this.checkAuth();
         }
         return this.currentUser;
     }
 
-    // Verificar permiso para un recurso
+    // Verificar permiso para un recurso (con cache básico)
     async checkPermission(resource) {
+        // Si ya estamos verificando, devolver resultado anterior o esperar
+        if (this._checkingPermission) {
+            console.log('AuthManager: Ya verificando permisos, usando cache temporal...');
+            return this._permissionCache.get(resource) || false;
+        }
+        
         try {
+            this._checkingPermission = true;
+            console.log('AuthManager: Verificando permiso para:', resource);
+            
+            // Verificar cache primero
+            if (this._permissionCache.has(resource)) {
+                console.log('AuthManager: Permiso encontrado en cache');
+                return this._permissionCache.get(resource);
+            }
+            
             const response = await fetch(`/api/permisos/verificar?recurso=${resource}`, {
                 credentials: 'include'
             });
             
             if (response.ok) {
                 const result = await response.json();
+                console.log('AuthManager: Resultado permiso:', result.autorizado);
+                
+                // Cachear por 5 minutos
+                this._permissionCache.set(resource, result.autorizado);
+                setTimeout(() => {
+                    this._permissionCache.delete(resource);
+                }, 5 * 60 * 1000);
+                
                 return result.autorizado;
             }
+            
+            console.log('AuthManager: Error en respuesta de permiso:', response.status);
             return false;
         } catch (error) {
-            console.error('Error al verificar permiso:', error);
+            console.error('AuthManager: Error al verificar permiso:', error);
             return false;
+        } finally {
+            this._checkingPermission = false;
         }
     }
 
     // Cerrar sesión
     async logout() {
         try {
+            console.log('AuthManager: Cerrando sesión...');
             await fetch('/api/auth/logout', {
                 method: 'POST',
                 credentials: 'include'
             });
             window.location.href = '/login.html';
         } catch (error) {
-            console.error('Error al cerrar sesión:', error);
+            console.error('AuthManager: Error al cerrar sesión:', error);
         }
     }
 
@@ -77,116 +112,24 @@ class AuthManager {
 
     // Verificar si es secretaria
     isSecretaria() {
-        return this.role === 'SECRETARIA';
+        return this.role && this.role.nombreRol === 'SECRETARIA';
     }
 
     // Verificar si es director
     isDirector() {
-        return this.role === 'DIRECTOR';
+        return this.role && this.role.nombreRol === 'DIRECTOR';
     }
 }
 
-// Instancia global
-const authManager = new AuthManager();
+// Instancia global - NO auto-inicializar
+window.authManager = new AuthManager();
 
-// Inicializar al cargar la página
-document.addEventListener('DOMContentLoaded', async () => {
-    const isAuthenticated = await authManager.checkAuth();
-    
-    if (isAuthenticated) {
-        // Actualizar UI con información del usuario
-        updateUIWithUserInfo();
-        
-        // Configurar sidebar según rol
-        setupSidebarByRole();
-    }
-});
-
-// Actualizar UI con información del usuario
-async function updateUIWithUserInfo() {
-    const user = await authManager.getUserInfo();
-    
-    // Actualizar saludo
-    const greetingElements = document.querySelectorAll('#user-greeting, .user-greeting');
-    greetingElements.forEach(el => {
-        if (el) el.textContent = `Hola, ${user.nombreCompleto}!`;
-    });
-    
-    // Actualizar título con rol
-    const roleBadge = document.getElementById('role-badge');
-    if (roleBadge) {
-        roleBadge.textContent = user.rol;
-        roleBadge.className = `role-badge ${user.rol.toLowerCase()}-badge`;
-    }
-}
-
-// Configurar sidebar según rol
-function setupSidebarByRole() {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
-    
-    // Ocultar/mostrar secciones según rol
-    if (authManager.isSecretaria()) {
-        // Mostrar todo excepto reportes
-        showElement('.section-title:contains("Gestión")', true);
-        showElement('.section-title:contains("Pagos")', true);
-        showElement('.section-title:contains("Reportes")', false);
-    } else if (authManager.isDirector()) {
-        // Mostrar solo dashboard y reportes
-        showElement('.section-title:contains("Gestión")', false);
-        showElement('.section-title:contains("Pagos")', false);
-        showElement('.section-title:contains("Reportes")', true);
-    }
-}
-
-// Función helper para mostrar/ocultar elementos
-function showElement(selector, show) {
-    const elements = document.querySelectorAll(selector);
-    elements.forEach(el => {
-        const parentSection = el.closest('div');
-        if (parentSection) {
-            parentSection.style.display = show ? 'block' : 'none';
-        }
-    });
-}
-
-// Función global para cerrar sesión
+// Exportar función global para cerrar sesión
 window.cerrarSesion = function() {
     if (confirm('¿Está seguro que desea cerrar sesión?')) {
         authManager.logout();
     }
 };
 
-// Función para verificar permisos antes de cargar una vista
-async function loadViewWithPermission(view, resource) {
-    const hasPermission = await authManager.checkPermission(resource);
-    
-    if (!hasPermission) {
-        alert('No tiene permisos para acceder a esta sección');
-        return false;
-    }
-    
-    loadView(view);
-    return true;
-}
-
-// Sobrescribir tu función loadView original
-const originalLoadView = window.loadView;
-window.loadView = async function(view) {
-    // Mapear vista a recurso
-    const viewToResource = {
-        'Alumnos/alumnos.html': 'ALUMNOS',
-        'matricula/nuevaMatricula.html': 'MATRICULA',
-        'reportes/reportes.html': 'REPORTES',
-        // Agrega más mapeos según necesites
-    };
-    
-    const resource = viewToResource[view];
-    
-    if (resource) {
-        return await loadViewWithPermission(view, resource);
-    }
-    
-    // Si no necesita permiso especial, cargar normalmente
-    return originalLoadView(view);
-};
+// NOTA IMPORTANTE: NO hay DOMContentLoaded aquí
+// Toda la inicialización se maneja desde el HTML principal

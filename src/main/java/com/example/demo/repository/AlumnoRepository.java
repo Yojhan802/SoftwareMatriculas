@@ -8,5 +8,5 @@ import com.example.demo.entity.Alumno;
 
 public interface AlumnoRepository extends JpaRepository<Alumno, Integer> {
 
-    Optional<Alumno> findByDniAlumno(int dni);
+    Optional<Alumno> findByDniAlumno(int dniAlumno);
 }
