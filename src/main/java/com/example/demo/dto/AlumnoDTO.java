@@ -8,6 +8,7 @@ import lombok.Data;
 public class AlumnoDTO {
 
     private int IdAlumno;
+    private int dniAlumno;
     private String Nombre;
     private String Apellido;
     private String Direccion;

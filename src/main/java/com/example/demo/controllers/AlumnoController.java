@@ -28,9 +28,9 @@ public class AlumnoController {
         return ResponseEntity.ok(service.crearAlumnos(dto));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<AlumnoDTO> obtener(@PathVariable int id) {
-        return ResponseEntity.ok(service.ObtenerAlumnoId(id));
+     @GetMapping("/{dni}")
+    public ResponseEntity<AlumnoDTO> obtener(@PathVariable int dni) {
+        return ResponseEntity.ok(service.ObtenerAlumnoPorDni(dni));
     }
 
     @GetMapping
@@ -38,14 +38,14 @@ public class AlumnoController {
         return ResponseEntity.ok(service.listarAlumnos());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<AlumnoDTO> actualizar(@PathVariable int id, @RequestBody AlumnoDTO dto) {
-        return ResponseEntity.ok(service.actualizarAlumno(id, dto));
+    @PutMapping("/{dni}")
+    public ResponseEntity<AlumnoDTO> actualizar(@PathVariable int dni, @RequestBody AlumnoDTO dto) {
+        return ResponseEntity.ok(service.actualizarAlumno(dni, dto));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
-        service.eliminarAlumno(id);
+    @DeleteMapping("/{dni}")
+    public ResponseEntity<Void> eliminar(@PathVariable int dni) {
+        service.eliminarAlumno(dni);
         return ResponseEntity.noContent().build();
     }
 }

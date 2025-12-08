@@ -30,4 +30,6 @@ public class Matricula {
 
     @Column(name = "Periodo", nullable = false, length = 100)
     private String Periodo;
+
+    // grado y cuota 
 }

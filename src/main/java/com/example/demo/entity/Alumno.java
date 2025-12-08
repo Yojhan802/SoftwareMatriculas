@@ -19,6 +19,10 @@ import lombok.Data;
 
 public class Alumno {
 
+    // DNI ALUMNO
+    @Column(name = "dniAlumno")
+    private int dniAlumno;
+    
     //ID DEL ALUMNO 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,11 +46,7 @@ public class Alumno {
     @Column(name = "estado_actual", nullable = false)
     private EstadoAlumno estadoActual = EstadoAlumno.Activo;
 
-
-    //aquí estaba así:
-        //@OneToMany(mappedBy = "matricula"), pero me daba error pq Spring buscaba en la entidad Matricula y buscaba
-        //una variable "matricula", pero no la encuentra pq la que los enlaza es "alumno" xd
-    @OneToMany(mappedBy = "alumno")
+    @OneToMany(mappedBy = "matricula")
     private List<Matricula> Matricula;
 
 

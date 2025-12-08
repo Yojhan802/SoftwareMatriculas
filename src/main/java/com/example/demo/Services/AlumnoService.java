@@ -8,12 +8,12 @@ public interface AlumnoService {
 
     AlumnoDTO crearAlumnos(AlumnoDTO alumnoDTO);
 
-    AlumnoDTO ObtenerAlumnoId(int id);
+    AlumnoDTO ObtenerAlumnoPorDni(int dni);
 
     List<AlumnoDTO> listarAlumnos();
 
-    AlumnoDTO actualizarAlumno(int id, AlumnoDTO alumnoDTO);
+    AlumnoDTO actualizarAlumno(int dni, AlumnoDTO alumnoDTO);
 
-    void eliminarAlumno(int id);
+    void eliminarAlumno(int dni);
 
 }

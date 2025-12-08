@@ -32,6 +32,7 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     private AlumnoDTO maptoDTO(Alumno alumno) {
         AlumnoDTO dto = new AlumnoDTO();
+        dto.setDniAlumno(alumno.getDniAlumno());
         dto.setIdAlumno(alumno.getId_Alumno());
         dto.setApellido(alumno.getApellido());
         dto.setDireccion(alumno.getDireccion());
@@ -42,6 +43,7 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     public Alumno mapToEntity(AlumnoDTO alumnoDTO) {
         Alumno alumno = new Alumno();
+        alumno.setDniAlumno(alumnoDTO.getDniAlumno());
         alumno.setId_Alumno(alumnoDTO.getIdAlumno());
         alumno.setNombre(cifrar(alumnoDTO.getNombre(), ""));
         alumno.setApellido(cifrar(alumnoDTO.getApellido(), ""));
@@ -62,8 +64,8 @@ public class AlumnoServiceImpl implements AlumnoService {
     }
 
     @Override
-    public AlumnoDTO ObtenerAlumnoId(int id) {
-        Alumno alumno = alumnoRepository.findById(id)
+    public AlumnoDTO ObtenerAlumnoPorDni(int dni) {
+        Alumno alumno = alumnoRepository.findByDni(dni)
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
         return maptoDTO(alumno);
@@ -78,8 +80,8 @@ public class AlumnoServiceImpl implements AlumnoService {
     }
 
     @Override
-    public AlumnoDTO actualizarAlumno(int id, AlumnoDTO alumnoDTO) {
-        Alumno alumno = alumnoRepository.findById(id)
+    public AlumnoDTO actualizarAlumno(int dni, AlumnoDTO alumnoDTO) {
+        Alumno alumno = alumnoRepository.findByDni(dni)
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
         alumno.setNombre(cifrar(alumnoDTO.getNombre(), ""));
@@ -93,12 +95,12 @@ public class AlumnoServiceImpl implements AlumnoService {
     }
 
     @Override
-    public void eliminarAlumno(int id) {
-        if (!alumnoRepository.existsById(id)) {
+    public void eliminarAlumno(int dni) {
+        if (!alumnoRepository.existsById(dni)) {
             throw new RuntimeException("Alumno no encontrado");
         }
 
-        alumnoRepository.deleteById(id);
+        alumnoRepository.deleteById(dni);
     }
 
     public static String cifrar(String encryptText, String key) {
