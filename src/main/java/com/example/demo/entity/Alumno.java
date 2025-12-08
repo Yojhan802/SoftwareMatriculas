@@ -22,7 +22,7 @@ public class Alumno {
     // DNI ALUMNO
     @Column(name = "dniAlumno")
     private int dniAlumno;
-    
+
     //ID DEL ALUMNO 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,7 +46,7 @@ public class Alumno {
     @Column(name = "estado_actual", nullable = false)
     private EstadoAlumno estadoActual = EstadoAlumno.Activo;
 
-    @OneToMany(mappedBy = "matricula")
+    @OneToMany(mappedBy = "id_Matricula")
     private List<Matricula> Matricula;
 
 

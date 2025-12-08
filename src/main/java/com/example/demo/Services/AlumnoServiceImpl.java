@@ -65,7 +65,7 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     @Override
     public AlumnoDTO ObtenerAlumnoPorDni(int dni) {
-        Alumno alumno = alumnoRepository.findByDni(dni)
+        Alumno alumno = alumnoRepository.findByDniAlumno(dni)
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
         return maptoDTO(alumno);
@@ -81,7 +81,7 @@ public class AlumnoServiceImpl implements AlumnoService {
 
     @Override
     public AlumnoDTO actualizarAlumno(int dni, AlumnoDTO alumnoDTO) {
-        Alumno alumno = alumnoRepository.findByDni(dni)
+        Alumno alumno = alumnoRepository.findByDniAlumno(dni)
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
         alumno.setNombre(cifrar(alumnoDTO.getNombre(), ""));
