@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vistas de Módulos del Dashboard</title>
+    <style>
+      /* Estilos base para las secciones */
+      .module-section {
+        padding: 20px;
+        border: 1px solid #ddd;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .module-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #eee;
+      }
+      .search-bar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      .table-container {
+        overflow-x: auto;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .data-table th,
+      .data-table td {
+        border: 1px solid #f4f4f4;
+        padding: 12px;
+        text-align: left;
+      }
+      .data-table th {
+        background-color: #f1f1f1;
+        font-weight: bold;
+      }
+      .button {
+        padding: 8px 15px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-left: 5px;
+      }
+      .btn-primary {
+        background-color: #3498db;
+        color: white;
+      }
+      .btn-success {
+        background-color: #2ecc71;
+        color: white;
+      }
+      .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+      }
+      .btn-secondary {
+        background-color: #bdc3c7;
+        color: #333;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="main-content-placeholder" style="padding: 20px">
+      <section id="module-alumnos" class="module-section">
+        <div class="module-header">
+          <h2>🧑‍🎓 Gestión de Alumnos</h2>
+          <button
+            class="button btn-primary"
+            onclick="alert('Abrir Formulario Nuevo Alumno')"
+          >
+            + Nuevo Alumno
+          </button>
+        </div>
+
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Buscar por Nombre, DNI o ID..."
+            style="flex-grow: 1"
+          />
+          <button class="button btn-secondary">Buscar</button>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre Completo</th>
+                <th>DNI</th>
+                <th>Teléfono</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1001</td>
+                <td>Juan Pérez López</td>
+                <td>45678912</td>
+                <td>987654321</td>
+                <td>Activo</td>
+                <td>
+                  <button
+                    class="button btn-secondary"
+                    title="Editar"
+                    onclick="alert('Editar Alumno 1001')"
+                  >
+                    📝
+                  </button>
+                  <button
+                    class="button btn-danger"
+                    title="Borrado Lógico"
+                    onclick="alert('Eliminar Alumno 1001')"
+                  >
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>1002</td>
+                <td>María Gómez Ruiz</td>
+                <td>87654321</td>
+                <td>912345678</td>
+                <td>Activo</td>
+                <td>
+                  <button class="button btn-secondary" title="Editar">
+                    📝
+                  </button>
+                  <button class="button btn-danger" title="Borrado Lógico">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align: right; margin-top: 15px">
+          <small>Página 1 de 5</small>
+        </div>
+      </section>
+
+      <section id="module-matricula" class="module-section">
+        <h2>📝 Nueva Matrícula</h2>
+
+        <h3>Paso 1: Identificación del Alumno</h3>
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Buscar DNI o Nombre del Alumno existente..."
+            style="flex-grow: 1"
+          />
+          <button class="button btn-secondary">Buscar</button>
+        </div>
+        <p
+          style="
+            padding: 10px;
+            background-color: #e8f8f5;
+            border-left: 3px solid #2ecc71;
+          "
+        >
+          Alumno Seleccionado: **Juan Pérez López** (DNI: 45678912)
+        </p>
+
+        <div style="text-align: right; margin-top: 15px">
+          <button class="button btn-secondary">Cancelar</button>
+          <button class="button btn-primary">Siguiente ></button>
+        </div>
+
+        <h3 style="margin-top: 30px">Paso 2: Datos de la Matrícula</h3>
+        <div style="display: flex; gap: 20px">
+          <div class="form-group" style="flex: 1">
+            <label>Año Escolar:</label>
+            <select>
+              <option>2025</option>
+              <option>2026</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1">
+            <label>Grado:</label>
+            <select>
+              <option>Primer Grado</option>
+              <option>Segundo Grado</option>
+              <option>...</option>
+            </select>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 30px">Paso 3: Vista Previa de Cuotas</h3>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Concepto</th>
+                <th>Monto</th>
+                <th>Vencimiento Estimado</th>
+                <th>Estado Inicial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Matrícula</td>
+                <td>$150.00</td>
+                <td>2025-02-28</td>
+                <td>DEBE</td>
+              </tr>
+              <tr>
+                <td>Pensión Marzo</td>
+                <td>$100.00</td>
+                <td>2025-03-31</td>
+                <td>DEBE</td>
+              </tr>
+              <tr>
+                <td>Pensión Abril</td>
+                <td>$100.00</td>
+                <td>2025-04-30</td>
+                <td>DEBE</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="text-align: right; margin-top: 20px">
+          <button class="button btn-secondary">< Anterior</button>
+          <button
+            class="button btn-success"
+            onclick="alert('Confirmar Matrícula y Cuotas')"
+          >
+            ✅ Confirmar Matrícula y Generar Cuotas
+          </button>
+        </div>
+      </section>
+
+      <section id="module-pagos" class="module-section">
+        <h2>💸 Gestión de Pagos y Recibos</h2>
+
+        <h3>Área A: Proceso de Pago</h3>
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Buscar Alumno para ver cuotas pendientes..."
+            style="flex-grow: 1"
+          />
+          <button class="button btn-secondary">Buscar</button>
+        </div>
+
+        <h4>Cuotas Pendientes (Estado DEBE)</h4>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Seleccionar</th>
+                <th>Concepto</th>
+                <th>Monto</th>
+                <th>Vencimiento</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><input type="checkbox" name="cuota-pago" /></td>
+                <td>Pensión Marzo</td>
+                <td>$100.00</td>
+                <td>2025-03-31</td>
+                <td>DEBE</td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" name="cuota-pago" disabled /></td>
+                <td>Pensión Abril</td>
+                <td>$100.00</td>
+                <td>2025-04-30</td>
+                <td>DEBE (No consecutiva)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <button
+          class="button btn-primary"
+          style="margin-top: 10px"
+          onclick="alert('Abrir Formulario de Pago')"
+        >
+          Pagar Seleccionadas
+        </button>
+
+        <h3 style="margin-top: 40px">Área B: Anulación de Pago</h3>
+        <div class="search-bar">
+          <input
+            type="text"
+            placeholder="Buscar Recibo N° (Ej: 001-0000005)..."
+            style="flex-grow: 1"
+          />
+          <button class="button btn-secondary">Buscar Recibo</button>
+        </div>
+
+        <div
+          style="border: 1px dashed #e74c3c; padding: 15px; margin-top: 15px"
+        >
+          <p>
+            Recibo Encontrado: **001-0000005** | Alumno: María G. | Monto:
+            $100.00 | Estado: PAGADO
+          </p>
+          <button
+            class="button btn-danger"
+            onclick="confirm('¿Está seguro de anular el recibo 001-0000005?')"
+          >
+            ⚠️ Anular Pago
+          </button>
+        </div>
+      </section>
+
+      <section id="module-reportes" class="module-section">
+        <h2>📊 Reportes</h2>
+
+        <h3>Reporte: Matriculados por Grado</h3>
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+          "
+        >
+          <div class="form-group" style="flex: 1">
+            <label>Seleccionar Año Escolar:</label>
+            <select>
+              <option>2025</option>
+              <option>2026</option>
+            </select>
+          </div>
+          <button class="button btn-primary">👁️ Generar Reporte</button>
+        </div>
+
+        <h4>Vista de Resultados (Ejemplo)</h4>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID Alumno</th>
+                <th>Nombre</th>
+                <th>Grado</th>
+                <th>Fecha Matrícula</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1001</td>
+                <td>Juan Pérez</td>
+                <td>Primer Grado</td>
+                <td>2025-02-15</td>
+              </tr>
+              <tr>
+                <td>1003</td>
+                <td>Luis Ramos</td>
+                <td>Primer Grado</td>
+                <td>2025-02-20</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align: right; margin-top: 10px">
+          <button class="button btn-success">⬇️ Exportar a Excel</button>
+        </div>
+
+        <hr style="margin: 30px 0" />
+
+        <h3>Reporte: Deudores por Año Escolar</h3>
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            margin-bottom: 20px;
+          "
+        >
+          <div class="form-group" style="flex: 1">
+            <label>Seleccionar Año Escolar:</label>
+            <select>
+              <option>2025</option>
+              <option>2026</option>
+            </select>
+          </div>
+          <button class="button btn-primary">👁️ Generar Reporte</button>
+        </div>
+
+        <h4>Vista de Resultados (Ejemplo)</h4>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Alumno</th>
+                <th>Grado</th>
+                <th>Cuota Pendiente</th>
+                <th>Monto Adeudado</th>
+                <th>Vencimiento</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Juan Pérez</td>
+                <td>Primer Grado</td>
+                <td>Pensión Marzo</td>
+                <td>$100.00</td>
+                <td>2025-03-31</td>
+              </tr>
+              <tr>
+                <td>Ana Salas</td>
+                <td>Tercer Grado</td>
+                <td>Matrícula</td>
+                <td>$150.00</td>
+                <td>2025-02-28</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="text-align: right; margin-top: 10px">
+          <button class="button btn-success">⬇️ Exportar a Excel</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
