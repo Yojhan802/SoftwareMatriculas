@@ -1,234 +1,270 @@
 // =========================================================
-// CONSTANTES Y CONFIGURACIÓN
+// CONFIGURACIÓN DE API Y VARIABLES GLOBALES
 // =========================================================
-const API_MATRICULA = "/api/matricula"; 
-const TABLE_BODY_ID = "alumnos-list-body"; // ID del <tbody> donde listamos las matrículas
-const INPUT_ALUMNO_ID = "input-alumno-id"; 
-const SELECT_PERIODO_ID = "select-periodo";
-const INPUT_FECHA_MATRICULA_ID = "input-fecha-matricula"; 
+// API para buscar alumnos (Ajustada a tu puerto y endpoint)
+const API_ALUMNOS_BASE = "/api/alumnos"; 
+// API para guardar la matrícula (Ajusta esto si tu backend es distinto)
+const API_MATRICULA = "/api/matriculas"; 
+
+let alumnoSeleccionado = null; // Guardará: {id, dni, nombreCompleto}
+let matriculaPayload = {};     // Datos temporales para enviar al final
 
 // =========================================================
 // INICIALIZACIÓN
 // =========================================================
+
+// Función principal de arranque
 function initMatriculas() {
-    const tableBody = document.getElementById(TABLE_BODY_ID);
-    if (!tableBody) return;
+    console.log("Inicializando módulo de Matrículas...");
+    
+    // 1. Resetear variables y UI
+    alumnoSeleccionado = null;
+    matriculaPayload = {};
+    showStep(1); 
+    resetUI();
 
-    // Llenar la lista inicial al cargar
-    cargarMatriculas();
+    // 2. Asignar Event Listeners (con verificación para no duplicar)
+    asignarEvento('btn-buscar-alumno', 'click', buscarAlumno);
+    asignarEvento('btn-siguiente-paso1', 'click', goToStep2);
+    
+    asignarEvento('btn-atras-paso2', 'click', goToStep1);
+    asignarEvento('btn-siguiente-paso2', 'click', goToStep3);
+    asignarEvento('grado-select', 'change', validarPaso2);
+
+    asignarEvento('btn-atras-paso3', 'click', goToStep2);
+    asignarEvento('btn-confirmar-matricula', 'click', confirmarMatricula);
 }
 
+// Helper para asignar eventos de forma segura
+function asignarEvento(id, evento, funcion) {
+    const el = document.getElementById(id);
+    if (el) {
+        // Clonar el nodo elimina listeners previos para evitar duplicados si recargas la vista
+        const newEl = el.cloneNode(true);
+        el.parentNode.replaceChild(newEl, el);
+        newEl.addEventListener(evento, funcion);
+    }
+}
+
+function resetUI() {
+    document.getElementById('alumno-search-input').value = '';
+    document.getElementById('alumno-seleccionado-info').style.display = 'none';
+    document.getElementById('btn-siguiente-paso1').disabled = true;
+    document.getElementById('grado-select').selectedIndex = 0;
+}
+
+// Detectar carga de vista (Si usas un SPA loader)
 document.addEventListener("DOMContentLoaded", initMatriculas);
-
+// Opcional: si tu sistema dispara un evento personalizado al cargar HTML
+document.addEventListener("vista-cargada", (e) => {
+    if (e.detail && e.detail.includes("matriculas")) initMatriculas();
+});
 
 // =========================================================
-// UTILIDADES
+// NAVEGACIÓN ENTRE PASOS
 // =========================================================
 
-// Función para parsear la fecha que viene del backend a formato DD/MM/YYYY
-function formatearFechaTabla(fechaIso) {
-    if (!fechaIso) return "";
-    try {
-        const datePart = fechaIso.split('T')[0];
-        const [year, month, day] = datePart.split('-');
-        return `${day}/${month}/${year}`;
-    } catch {
-        return fechaIso;
-    }
-}
-
-// Obtiene los datos del formulario Matrícula para el POST/PUT
-function obtenerDatosFormularioMatricula(idMatricula = null) {
-    // Es crucial que el campo de alumnoID esté lleno previamente (por una búsqueda)
-    const alumnoId = document.getElementById(INPUT_ALUMNO_ID)?.value; 
-    const periodo = document.getElementById(SELECT_PERIODO_ID)?.value;
-    // Obtiene la fecha del input o la fecha actual si no hay valor
-    const fechaMatricula = document.getElementById(INPUT_FECHA_MATRICULA_ID)?.value || new Date().toISOString().split('T')[0];
-
-    if (!alumnoId || !periodo) {
-        throw new Error("Por favor, seleccione un alumno y un periodo válidos.");
-    }
+function showStep(stepNumber) {
+    // Ocultar todos
+    [1, 2, 3].forEach(num => {
+        const el = document.getElementById(`step-${num}`);
+        if(el) el.style.display = 'none';
+    });
     
-    const matriculaData = {
-        ...(idMatricula && { id_Matricula: idMatricula }), 
-        
-        // Estructura de la Entidad esperada por tu API de Spring
-        alumno: {
-            id_Alumno: parseInt(alumnoId) 
-        },
-        Fecha_Matricula: fechaMatricula, // Nombre de propiedad de la Entidad
-        Periodo: periodo                  // Nombre de propiedad de la Entidad
-    };
-    return matriculaData;
-}
-
-
-// =========================================================
-// CRUD: LISTAR (GET /api/matricula)
-// =========================================================
-async function cargarMatriculas() {
-    try {
-        const res = await fetch(API_MATRICULA);
-        
-        if (!res.ok) throw new Error(`Error al cargar matrículas: ${res.status}`);
-        
-        const data = await res.json(); 
-        const body = document.getElementById(TABLE_BODY_ID);
-        if (!body) return;
-
-        body.innerHTML = ""; 
-
-        data.forEach((m) => {
-            body.innerHTML += `
-                <tr>
-                    <td>${m.id_Matricula}</td> 
-                    <td>${m.id_alumno}</td> 
-                    <td>${m.periodo ?? ""}</td>
-                    <td>${formatearFechaTabla(m.fecha_Matricula)}</td>
-                    <td>
-                        <button class="button btn-secondary" title="Editar Matrícula" onclick="editarMatricula(${m.id_Matricula})">📝</button>
-                        <button class="button btn-danger" title="Eliminar Matrícula" onclick="eliminarMatricula(${m.id_Matricula})">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-
-    } catch (error) {
-        console.error("Error cargando matrículas:", error);
-        alert(`Error al listar matrículas: ${error.message}`);
+    // Mostrar el actual con animación simple
+    const current = document.getElementById(`step-${stepNumber}`);
+    if (current) {
+        current.style.display = 'block';
+        current.classList.add('fade-in'); // Asegúrate de tener CSS para animación o quítalo
     }
 }
 
-
-// =========================================================
-// CRUD: OBTENER/EDITAR (GET /api/matricula/{id})
-// =========================================================
-async function obtenerMatricula(id) {
-    try {
-        const res = await fetch(`${API_MATRICULA}/${id}`);
-        
-        if (!res.ok) throw new Error(`Matrícula ID ${id} no encontrada.`);
-        
-        const m = await res.json(); // MatriculaDTO
-        
-        // Llenar los campos del formulario con los datos para editar
-        document.getElementById("matriculaIdHidden").value = m.id_Matricula; 
-        document.getElementById("modalTituloMatricula").innerText = `Editar Matrícula ID: ${m.id_Matricula}`;
-
-        // Llenar datos de la Matrícula
-        document.getElementById(INPUT_ALUMNO_ID).value = m.id_alumno;
-        document.getElementById(SELECT_PERIODO_ID).value = m.periodo;
-        document.getElementById(INPUT_FECHA_MATRICULA_ID).value = m.fecha_Matricula.split('T')[0]; // YYYY-MM-DD
-        
-        // Simular info del alumno seleccionado (solo con el ID, idealmente buscarías el nombre)
-        document.getElementById("alumno-seleccionado-info").innerText = `Alumno Seleccionado: ID ${m.id_alumno}`;
-
-        // Mover al paso 2 para iniciar la edición
-        goToStep(2); 
-
-    } catch (error) {
-        console.error("Error obteniendo matrícula:", error);
-        alert(`Error al cargar datos para edición: ${error.message}`);
+function cancelarMatricula() {
+    if (confirm('¿Cancelar proceso? Se perderán los datos.')) {
+        // Redirige al dashboard o limpia el formulario
+        window.location.href = '#'; // O tu lógica de routing: loadView('dashboard.html')
+        resetUI();
+        showStep(1);
     }
 }
 
-function editarMatricula(id) {
-    // Limpiar formulario antes de cargar nuevos datos
-    limpiarFormularioMatricula(); 
-    obtenerMatricula(id);
-}
-
-
 // =========================================================
-// CRUD: CREAR / ACTUALIZAR (POST /api/matricula o PUT /api/matricula/{id})
+// PASO 1: BÚSQUEDA (CONSUMO API REST)
 // =========================================================
-async function guardarMatricula() {
-    const id = document.getElementById("matriculaIdHidden")?.value || ""; 
-    const isUpdating = id !== "";
-    
-    try {
-        const matricula = obtenerDatosFormularioMatricula(isUpdating ? parseInt(id) : null);
-        
-        const url = isUpdating ? `${API_MATRICULA}/${id}` : API_MATRICULA;
-        const method = isUpdating ? "PUT" : "POST";
-        const successMessage = isUpdating ? "Matrícula actualizada con éxito." : "Matrícula creada y cuotas generadas con éxito.";
 
-        const res = await fetch(url, {
-            method: method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(matricula),
-        });
+async function buscarAlumno() {
+    const inputDni = document.getElementById('alumno-search-input');
+    const dni = inputDni.value.trim();
+    const btnBuscar = document.getElementById('btn-buscar-alumno');
+    const infoDiv = document.getElementById('alumno-seleccionado-info');
 
-        if (!res.ok) {
-             const errorData = await res.json().catch(() => ({ message: res.statusText }));
-             throw new Error(`Error al guardar. Código: ${res.status}. Detalle: ${errorData.message || res.statusText}`);
-        }
-
-        const matriculaGuardada = await res.json(); 
-        
-        alert(successMessage + ` ID: ${matriculaGuardada.id_Matricula}`);
-        
-        limpiarFormularioMatricula(); 
-        goToStep(1); 
-        cargarMatriculas(); 
-
-    } catch (error) {
-        console.error("Error guardando matrícula:", error);
-        alert(`Fallo en el guardado: ${error.message}`);
-    }
-}
-
-
-// =========================================================
-// CRUD: ELIMINAR (DELETE /api/matricula/{id})
-// =========================================================
-async function eliminarMatricula(id) {
-    if (!confirm(`¿Está seguro de eliminar la matrícula ID ${id}?`)) {
+    // Validación básica
+    if (!dni || dni.length < 8) {
+        alert("Por favor ingrese un DNI válido.");
         return;
     }
 
-    try {
-        const res = await fetch(`${API_MATRICULA}/${id}`, {
-            method: "DELETE"
-        });
+    // UI: Loading
+    btnBuscar.disabled = true;
+    btnBuscar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Buscando...';
+    infoDiv.style.display = 'none';
 
-        if (res.status === 204) { 
-            alert(`Matrícula ID ${id} eliminada con éxito.`);
-            cargarMatriculas(); 
+    // Construcción de la URL: http://localhost:8097/api/alumnos/{dni}
+    const url = `${API_ALUMNOS_BASE}/dni/${dni}`;
+
+    try {
+        const response = await fetch(url);
+
+        if (response.status === 404) {
+            alert("No se encontró ningún alumno con ese DNI.");
+            alumnoSeleccionado = null;
+            document.getElementById('btn-siguiente-paso1').disabled = true;
+        } else if (response.ok) {
+            const data = await response.json();
+            
+            // Mapeo de tu respuesta JSON: { IdAlumno, dniAlumno, Nombre, Apellido ... }
+            if (data.IdAlumno) {
+                alumnoSeleccionado = {
+                    id: data.IdAlumno,
+                    dni: data.dniAlumno,
+                    nombreCompleto: `${data.Nombre} ${data.Apellido}`
+                };
+
+                // Mostrar datos en pantalla
+                document.getElementById('nombre-alumno-display').textContent = alumnoSeleccionado.nombreCompleto;
+                document.getElementById('dni-alumno-display').textContent = alumnoSeleccionado.dni;
+                
+                infoDiv.style.display = 'block';
+                infoDiv.className = 'alert alert-success mt-3'; // Asegurar estilo verde
+                document.getElementById('btn-siguiente-paso1').disabled = false;
+            } else {
+                alert("La respuesta del servidor no contiene un ID válido.");
+            }
         } else {
-            const errorText = await res.text();
-            throw new Error(`Error al eliminar. Código: ${res.status}. Detalle: ${errorText}`);
+            throw new Error("Error en el servidor: " + response.status);
         }
 
     } catch (error) {
-        console.error("Error eliminando matrícula:", error);
-        alert(`Error de eliminación: ${error.message}`);
+        console.error("Error Fetch:", error);
+        alert("Error de conexión con el servicio de alumnos.");
+    } finally {
+        // Restaurar botón
+        btnBuscar.disabled = false;
+        btnBuscar.innerHTML = '<i class="fas fa-search"></i> Buscar';
     }
 }
 
-
-// =========================================================
-// LIMPIEZA
-// =========================================================
-function limpiarFormularioMatricula() {
-    // Limpiar campos de IDs y títulos
-    document.getElementById("matriculaIdHidden").value = ""; 
-    document.getElementById("modalTituloMatricula").innerText = "📝 Proceso de Nueva Matrícula";
+function goToStep2() {
+    if (!alumnoSeleccionado) return;
     
-    // Limpiar campos de formulario
-    document.getElementById(INPUT_ALUMNO_ID).value = ""; 
-    document.getElementById(SELECT_PERIODO_ID).value = new Date().getFullYear(); 
-    document.getElementById(INPUT_FECHA_MATRICULA_ID).value = new Date().toISOString().split('T')[0];
+    // Preparar Paso 2
+    document.getElementById('hidden-alumno-id').value = alumnoSeleccionado.id;
+    // Poner fecha de hoy
+    document.getElementById('fecha-matricula').value = new Date().toLocaleDateString('en-CA');;
     
-    // Limpiar datos de alumno y previsualización
-    document.getElementById("alumno-seleccionado-info").innerText = "Alumno Seleccionado: **Ninguno**";
-    document.getElementById("cuotas-preview-body").innerHTML = ""; 
+    validarPaso2(); // Verificar si el botón debe estar activo
+    showStep(2);
 }
 
-// Exposición global para los eventos onclick en el HTML
-window.cargarMatriculas = cargarMatriculas;
-window.obtenerMatricula = obtenerMatricula;
-window.editarMatricula = editarMatricula;
-window.eliminarMatricula = eliminarMatricula;
-window.guardarMatricula = guardarMatricula; 
-window.limpiarFormularioMatricula = limpiarFormularioMatricula;
+function goToStep1() {
+    showStep(1);
+}
+
+// =========================================================
+// PASO 2: DATOS
+// =========================================================
+
+function validarPaso2() {
+    const grado = document.getElementById('grado-select').value;
+    const btnNext = document.getElementById('btn-siguiente-paso2');
+    // Solo habilitar si hay grado seleccionado
+    btnNext.disabled = (grado === "" || grado === null);
+}
+
+function goToStep3() {
+    const grado = document.getElementById('grado-select').value;
+    const periodo = document.getElementById('anio-escolar').value;
+    const fecha = document.getElementById('fecha-matricula').value;
+
+    if (!grado) {
+        alert("Debe seleccionar un grado.");
+        return;
+    }
+
+    // Guardar en objeto temporal
+    matriculaPayload = {
+        id_Alumno: alumnoSeleccionado.id, // Tu API espera un ID de alumno
+        periodo: periodo,
+        fecha: fecha,
+        grado: grado
+    };
+
+    // Renderizar resumen
+    document.getElementById('resumen-nombre-alumno').textContent = alumnoSeleccionado.nombreCompleto;
+    document.getElementById('resumen-grado').textContent = grado;
+    
+    generarCuotasSimuladas(grado, periodo);
+    showStep(3);
+}
+
+// =========================================================
+// PASO 3: CONFIRMACIÓN Y CUOTAS
+// =========================================================
+
+function generarCuotasSimuladas(grado, periodo) {
+    const tbody = document.getElementById('cuotas-preview-body');
+    tbody.innerHTML = '';
+
+    // Lógica simulada (esto debería venir del backend idealmente)
+    const costoMatricula = 150.00;
+    const costoPension = 100.00;
+
+    const cuotas = [
+        { c: 'Matrícula', m: costoMatricula, f: `${periodo}-02-28` },
+        { c: 'Pensión Marzo', m: costoPension, f: `${periodo}-03-31` },
+        { c: 'Pensión Abril', m: costoPension, f: `${periodo}-04-30` },
+        { c: 'Pensión Mayo', m: costoPension, f: `${periodo}-05-31` }
+    ];
+
+    cuotas.forEach(item => {
+        const row = `<tr>
+            <td>${item.c}</td>
+            <td>S/ ${item.m.toFixed(2)}</td>
+            <td>${item.f}</td>
+            <td><span class="badge bg-warning text-dark">Pendiente</span></td>
+        </tr>`;
+        tbody.innerHTML += row;
+    });
+}
+
+async function confirmarMatricula() {
+    const btnConfirmar = document.getElementById('btn-confirmar-matricula');
+    
+    // UI Loading
+    btnConfirmar.disabled = true;
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+
+    try {
+        const response = await fetch(API_MATRICULA, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(matriculaPayload)
+        });
+
+        if (response.ok) {
+            alert(`✅ Matrícula guardada exitosamente para ${alumnoSeleccionado.nombreCompleto}`);
+            // Reiniciar todo o ir al listado
+            initMatriculas(); 
+            // window.loadView('lista-matriculas.html'); // Si tienes navegación
+        } else {
+            const errorTxt = await response.text();
+            alert("Error al guardar matrícula: " + errorTxt);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error de conexión al guardar.");
+    } finally {
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = '<i class="fas fa-check me-2"></i> Confirmar Matrícula';
+    }
+}

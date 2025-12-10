@@ -1,341 +1,139 @@
-<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestión de Matrículas y Pagos</title>
-    <style>
-      /* Estilos base */
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f7f6;
-        margin: 0;
-      }
-      main {
-        padding: 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      .module-section {
-        padding: 20px;
-        border: 1px solid #ddd;
-        margin-bottom: 30px;
-        border-radius: 8px;
-        background-color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      }
-      .module-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #eee;
-      }
-      .search-bar {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 10px;
-      }
-      .table-container {
-        overflow-x: auto;
-      }
-      .data-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      .data-table th,
-      .data-table td {
-        border: 1px solid #f4f4f4;
-        padding: 12px;
-        text-align: left;
-      }
-      .data-table th {
-        background-color: #f1f1f1;
-        font-weight: bold;
-      }
-      .button {
-        padding: 8px 15px;
-        border: none;
-        cursor: pointer;
-        border-radius: 5px;
-        margin-left: 5px;
-      }
-      .btn-primary {
-        background-color: #3498db;
-        color: white;
-      }
-      .btn-success {
-        background-color: #2ecc71;
-        color: white;
-      }
-      .btn-danger {
-        background-color: #e74c3c;
-        color: white;
-      }
-      .btn-secondary {
-        background-color: #bdc3c7;
-        color: #333;
-      }
-      .form-group {
-        margin-bottom: 15px;
-      }
-      .form-group input,
-      .form-group select {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-      }
-      /* Estilos de Pasos */
-      .progress-container {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 25px;
-        padding: 10px 0;
-        border-bottom: 1px solid #ddd;
-      }
-      .progress-step {
-        flex-grow: 1;
-        text-align: center;
-        padding: 8px 0;
-        border-bottom: 3px solid #ccc;
-        color: #999;
-        cursor: pointer;
-        transition: all 0.3s ease;
-      }
-      .progress-step.active {
-        border-bottom-color: #3498db;
-        color: #3498db;
-        font-weight: bold;
-      }
-      .progress-step.done {
-        border-bottom-color: #2ecc71;
-        color: #2ecc71;
-      }
-      .matricula-step {
-        display: none;
-        padding: 20px 0;
-      }
-      .matricula-step.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <main id="main-content-placeholder">
-      <input type="hidden" id="matriculaIdHidden" value="" />
-      <input type="hidden" id="input-alumno-id" value="" />
+<div class="card shadow-sm p-4">
+  <h2><i class="fas fa-edit me-2"></i> Nueva Matrícula</h2>
+  <hr />
 
-      <section id="module-alumnos" class="module-section">
-        <div class="module-header">
-          <h2>🧑‍🎓 Listado de Matrículas (Simulado)</h2>
-          <button class="button btn-primary" onclick="goToStep(1)">
-            + Nueva Matrícula
+  <div id="matricula-steps">
+    <div id="step-1">
+      <h4>Paso 1: Identificación del Alumno</h4>
+      <div class="row g-2 mb-4 align-items-center">
+        <div class="col-8 col-md-9">
+          <input
+            type="number"
+            class="form-control"
+            id="alumno-search-input"
+            placeholder="Ingrese DNI del Alumno..."
+          />
+        </div>
+        <div class="col-4 col-md-3">
+          <button class="btn btn-secondary w-100" id="btn-buscar-alumno">
+            <i class="fas fa-search"></i> Buscar
           </button>
         </div>
+      </div>
 
-        <div class="search-bar">
+      <div
+        id="alumno-seleccionado-info"
+        class="alert alert-success mt-3"
+        style="display: none"
+      >
+        <h5 class="alert-heading">
+          <i class="fas fa-user-check"></i> Alumno Encontrado
+        </h5>
+        <hr />
+        <p class="mb-0">
+          <strong>Nombre:</strong> <span id="nombre-alumno-display"></span
+          ><br />
+          <strong>DNI:</strong> <span id="dni-alumno-display"></span>
+        </p>
+      </div>
+
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <button class="btn btn-outline-danger" onclick="cancelarMatricula()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" id="btn-siguiente-paso1" disabled>
+          Siguiente <i class="fas fa-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="step-2" style="display: none">
+      <h4>Paso 2: Datos de la Matrícula</h4>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="anio-escolar" class="form-label"
+            >Año Escolar (Periodo)</label
+          >
+          <select id="anio-escolar" class="form-select">
+            <option value="2025" selected>2025</option>
+            <option value="2026">2026</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="grado-select" class="form-label">Grado</label>
+          <select id="grado-select" class="form-select">
+            <option value="" disabled selected>Seleccione un Grado</option>
+            <option value="Primer Grado">Primer Grado</option>
+            <option value="Segundo Grado">Segundo Grado</option>
+            <option value="Tercer Grado">Tercer Grado</option>
+            <option value="Cuarto Grado">Cuarto Grado</option>
+            <option value="Quinto Grado">Quinto Grado</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label for="fecha-matricula" class="form-label"
+            >Fecha de Matrícula</label
+          >
           <input
-            type="text"
-            placeholder="Buscar Matrícula por ID, Alumno, Periodo..."
-            style="flex-grow: 1"
+            type="date"
+            id="fecha-matricula"
+            class="form-control"
+            disabled
           />
-          <button class="button btn-secondary">Buscar</button>
         </div>
 
-        <div class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>ID Matrícula</th>
-                <th>ID Alumno</th>
-                <th>Periodo</th>
-                <th>Fecha Matrícula</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="alumnos-list-body"></tbody>
-          </table>
+        <input type="hidden" id="hidden-alumno-id" />
+      </div>
+
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <button class="btn btn-secondary" id="btn-atras-paso2">
+          <i class="fas fa-arrow-left me-1"></i> Anterior
+        </button>
+        <button class="btn btn-primary" id="btn-siguiente-paso2" disabled>
+          Siguiente <i class="fas fa-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="step-3" style="display: none">
+      <h4>Paso 3: Vista Previa de Cuotas</h4>
+
+      <div class="alert alert-light border">
+        <strong>Resumen:</strong> Matrícula para el alumno
+        <span id="resumen-nombre-alumno" class="fw-bold"></span> en el grado
+        <span id="resumen-grado" class="fw-bold"></span>.
+      </div>
+
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Concepto</th>
+              <th>Monto</th>
+              <th>Vencimiento Estimado</th>
+              <th>Estado Inicial</th>
+            </tr>
+          </thead>
+          <tbody id="cuotas-preview-body"></tbody>
+        </table>
+        <div id="cuota-warning" class="alert alert-info mt-2">
+          <i class="fas fa-info-circle"></i> La generación de cuotas es una
+          proyección y se confirmará al guardar.
         </div>
-        <div style="text-align: right; margin-top: 15px">
-          <small>Página 1 de 5</small>
-        </div>
-      </section>
+      </div>
 
-      <hr />
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <button class="btn btn-secondary" id="btn-atras-paso3">
+          <i class="fas fa-arrow-left me-1"></i> Anterior
+        </button>
+        <button class="btn btn-success" id="btn-confirmar-matricula">
+          <i class="fas fa-check me-2"></i> Confirmar Matrícula
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
-      <section id="module-matricula" class="module-section">
-        <h2 id="modalTituloMatricula">📝 Proceso de Nueva Matrícula</h2>
-
-        <div class="progress-container" id="matricula-progress">
-          <div class="progress-step active" data-step="1">Paso 1: Alumno</div>
-          <div class="progress-step" data-step="2">Paso 2: Datos</div>
-          <div class="progress-step" data-step="3">
-            Paso 3: Previsualización
-          </div>
-        </div>
-
-        <div id="matricula-steps-content">
-          <div class="matricula-step active" data-step-content="1">
-            <h3>Paso 1: Identificación del Alumno</h3>
-            <div class="search-bar">
-              <input
-                type="text"
-                id="input-alumno-search"
-                placeholder="Buscar DNI o Nombre del Alumno existente..."
-                style="flex-grow: 1"
-              />
-              <button class="button btn-secondary">Buscar</button>
-            </div>
-            <p
-              id="alumno-seleccionado-info"
-              style="
-                padding: 10px;
-                background-color: #f0f8ff;
-                border-left: 3px solid #3498db;
-                margin-top: 15px;
-              "
-            >
-              Alumno Seleccionado: **Ninguno**
-            </p>
-            <div style="text-align: right; margin-top: 20px">
-              <button class="button btn-primary" onclick="goToStep(2)">
-                Siguiente >
-              </button>
-            </div>
-          </div>
-
-          <div class="matricula-step" data-step-content="2">
-            <h3 style="margin-bottom: 20px">Paso 2: Datos de la Matrícula</h3>
-            <div style="display: flex; gap: 20px">
-              <div class="form-group" style="flex: 1">
-                <label>Año Escolar (Periodo):</label>
-                <select id="select-periodo">
-                  <option>2025</option>
-                  <option>2026</option>
-                  <option>2027</option>
-                </select>
-              </div>
-              <div class="form-group" style="flex: 1">
-                <label>Fecha de Matrícula:</label>
-                <input
-                  type="date"
-                  id="input-fecha-matricula"
-                  value="2025-12-07"
-                />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Grado:</label>
-              <select id="select-grado">
-                <option>Primer Grado</option>
-                <option>Segundo Grado</option>
-                <option>Tercer Grado</option>
-              </select>
-            </div>
-
-            <div style="text-align: right; margin-top: 20px">
-              <button class="button btn-secondary" onclick="goToStep(1)">
-                < Anterior
-              </button>
-              <button class="button btn-primary" onclick="goToStep(3)">
-                Siguiente >
-              </button>
-            </div>
-          </div>
-
-          <div class="matricula-step" data-step-content="3">
-            <h3 style="margin-bottom: 20px">Paso 3: Vista Previa de Cuotas</h3>
-            <div class="table-container">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Concepto</th>
-                    <th>Monto</th>
-                    <th>Vencimiento Estimado</th>
-                    <th>Estado Inicial</th>
-                  </tr>
-                </thead>
-                <tbody id="cuotas-preview-body"></tbody>
-              </table>
-            </div>
-
-            <div style="text-align: right; margin-top: 20px">
-              <button class="button btn-secondary" onclick="goToStep(2)">
-                < Anterior
-              </button>
-              <button
-                class="button btn-success"
-                id="btn-confirmar-matricula"
-                onclick="guardarMatricula()"
-              >
-                ✅ Confirmar Matrícula y Generar Cuotas
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <hr />
-
-      <section id="module-pagos" class="module-section">
-        <h2>💸 Gestión de Pagos y Recibos</h2>
-      </section>
-      <section id="module-reportes" class="module-section">
-        <h2>📊 Reportes</h2>
-      </section>
-    </main>
-
-    <script src="matricula.js"></script>
-
-    <script>
-      let currentStep = 1;
-      const totalSteps = 3;
-
-      function goToStep(step) {
-        if (step < 1 || step > totalSteps) return;
-
-        document
-          .querySelector(`.matricula-step[data-step-content="${currentStep}"]`)
-          .classList.remove("active");
-        document
-          .querySelector(`.matricula-step[data-step-content="${step}"]`)
-          .classList.add("active");
-
-        document
-          .querySelector(`.progress-step[data-step="${currentStep}"]`)
-          .classList.remove("active");
-        document
-          .querySelector(`.progress-step[data-step="${step}"]`)
-          .classList.add("active");
-
-        for (let i = 1; i < step; i++) {
-          document
-            .querySelector(`.progress-step[data-step="${i}"]`)
-            .classList.add("done");
-        }
-        for (let i = step + 1; i <= totalSteps; i++) {
-          document
-            .querySelector(`.progress-step[data-step="${i}"]`)
-            .classList.remove("done");
-        }
-
-        currentStep = step;
-      }
-
-      document.querySelectorAll(".progress-step").forEach((stepElement) => {
-        stepElement.addEventListener("click", () => {
-          const stepNumber = parseInt(stepElement.getAttribute("data-step"));
-          goToStep(stepNumber);
-        });
-      });
-
-      document.addEventListener("DOMContentLoaded", () => {
-        goToStep(1);
-      });
-    </script>
-  </body>
-</html>
+<script src="../js/matriculas.js"></script>
