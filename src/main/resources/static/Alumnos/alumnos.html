@@ -3,22 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestión de Alumnos</title>
-
-    <!-- Bootstrap CSS -->
+    <title>Gestión de Alumnos - Demo</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <!-- Bootstrap Icons -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
     />
-
     <style>
       body {
-        background-color: #f8f9fa;
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+      }
+      .container-fluid {
+        padding: 0;
+        max-width: 100%;
       }
       .header-section {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -35,14 +37,20 @@
       .table-container {
         overflow-x: auto;
       }
-      .btn-group-custom {
-        display: flex;
-        gap: 0.5rem;
+      .char-counter {
+        font-size: 0.75rem;
+        color: #6c757d;
+      }
+      .char-counter.warning {
+        color: #ffc107;
+      }
+      .char-counter.danger {
+        color: #dc3545;
       }
     </style>
   </head>
   <body>
-    <div class="container-fluid py-4">
+    <div class="container-fluid">
       <!-- Header -->
       <div class="header-section">
         <h1><i class="bi bi-person-lines-fill"></i> Gestión de Alumnos</h1>
@@ -56,26 +64,39 @@
       <div class="card mb-4">
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label fw-bold">
-                <i class="bi bi-search"></i> Buscar por DNI
+                <i class="bi bi-search"></i> Buscar por DNI/Nombre/Apellido
               </label>
               <div class="input-group">
                 <input
-                  type="number"
+                  type="text"
                   class="form-control"
                   id="searchDni"
-                  placeholder="Ingrese DNI del alumno"
+                  placeholder="Ingrese DNI, nombre o apellido"
                 />
-                <button class="btn btn-primary" onclick="buscarAlumnoPorDni()">
-                  <i class="bi bi-search"></i> Buscar
-                </button>
                 <button class="btn btn-secondary" onclick="limpiarBusqueda()">
                   <i class="bi bi-arrow-clockwise"></i> Limpiar
                 </button>
               </div>
             </div>
-            <div class="col-md-6 d-flex align-items-end justify-content-end">
+
+            <div class="col-md-3">
+              <label class="form-label fw-bold">
+                <i class="bi bi-funnel"></i> Filtrar por Estado
+              </label>
+              <select
+                class="form-select"
+                id="filtroEstado"
+                onchange="aplicarFiltros()"
+              >
+                <option value="todos">Todos los alumnos</option>
+                <option value="activos" selected>Solo Activos</option>
+                <option value="inactivos">Solo Inactivos</option>
+              </select>
+            </div>
+
+            <div class="col-md-5 d-flex align-items-end justify-content-end">
               <button class="btn btn-success" onclick="abrirModalAlumno()">
                 <i class="bi bi-plus-circle"></i> Nuevo Alumno
               </button>
@@ -101,8 +122,6 @@
               <option value="5">5</option>
               <option value="10" selected>10</option>
               <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
             </select>
           </div>
         </div>
@@ -120,26 +139,14 @@
                   <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody id="body-alumnos">
-                <tr>
-                  <td colspan="7" class="text-center">
-                    <div class="py-4">
-                      <i
-                        class="bi bi-inbox"
-                        style="font-size: 3rem; color: #ccc"
-                      ></i>
-                      <p class="text-muted">Cargando alumnos...</p>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
+              <tbody id="body-alumnos"></tbody>
             </table>
           </div>
         </div>
         <div class="card-footer bg-light">
           <div class="row align-items-center">
             <div class="col-md-6">
-              <p class="mb-0 text-muted" id="paginationInfo">Cargando...</p>
+              <p class="mb-0 text-muted" id="paginationInfo"></p>
             </div>
             <div class="col-md-6">
               <nav id="paginationContainer"></nav>
@@ -149,7 +156,7 @@
       </div>
     </div>
 
-    <!-- Modal para Crear/Editar Alumno -->
+    <!-- Modal -->
     <div class="modal fade" id="modalAlumno" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -164,69 +171,85 @@
           <div class="modal-body">
             <form id="formAlumno">
               <input type="hidden" id="alumnoId" />
-
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label for="dniAlumno" class="form-label">
-                    DNI <span class="text-danger">*</span>
-                  </label>
+                  <label for="dniAlumno" class="form-label"
+                    >DNI <span class="text-danger">*</span></label
+                  >
                   <input
-                    type="number"
+                    type="text"
                     class="form-control"
                     id="dniAlumno"
                     required
                     placeholder="Ej: 12345678"
+                    maxlength="8"
+                    pattern="[0-9]{8}"
                   />
+                  <div class="invalid-feedback">
+                    El DNI debe tener exactamente 8 dígitos numéricos
+                  </div>
+                  <div class="char-counter" id="dniCounter">0/8 caracteres</div>
+                  <small class="text-muted"
+                    >Debe contener exactamente 8 dígitos</small
+                  >
                 </div>
-
                 <div class="col-md-6">
-                  <label for="estadoActual" class="form-label">
-                    Estado <span class="text-danger">*</span>
-                  </label>
+                  <label for="estadoActual" class="form-label"
+                    >Estado <span class="text-danger">*</span></label
+                  >
                   <select class="form-select" id="estadoActual" required>
                     <option value="Activo">Activo</option>
                     <option value="Inactivo">Inactivo</option>
                     <option value="Retirado">Retirado</option>
                   </select>
                 </div>
-
                 <div class="col-md-6">
-                  <label for="nombre" class="form-label">
-                    Nombre <span class="text-danger">*</span>
-                  </label>
+                  <label for="nombre" class="form-label"
+                    >Nombre <span class="text-danger">*</span></label
+                  >
                   <input
                     type="text"
                     class="form-control"
                     id="nombre"
                     required
                     placeholder="Ingrese nombre"
+                    maxlength="50"
                   />
+                  <div class="char-counter" id="nombreCounter">
+                    0/50 caracteres
+                  </div>
                 </div>
-
                 <div class="col-md-6">
-                  <label for="apellido" class="form-label">
-                    Apellido <span class="text-danger">*</span>
-                  </label>
+                  <label for="apellido" class="form-label"
+                    >Apellido <span class="text-danger">*</span></label
+                  >
                   <input
                     type="text"
                     class="form-control"
                     id="apellido"
                     required
                     placeholder="Ingrese apellido"
+                    maxlength="50"
                   />
+                  <div class="char-counter" id="apellidoCounter">
+                    0/50 caracteres
+                  </div>
                 </div>
-
                 <div class="col-12">
-                  <label for="direccion" class="form-label">
-                    Dirección <span class="text-danger">*</span>
-                  </label>
+                  <label for="direccion" class="form-label"
+                    >Dirección <span class="text-danger">*</span></label
+                  >
                   <input
                     type="text"
                     class="form-control"
                     id="direccion"
                     required
                     placeholder="Ingrese dirección completa"
+                    maxlength="100"
                   />
+                  <div class="char-counter" id="direccionCounter">
+                    0/100 caracteres
+                  </div>
                 </div>
               </div>
             </form>
@@ -251,8 +274,514 @@
       </div>
     </div>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Script personalizado -->
+    <script>
+      let modalAlumno = null;
+      let paginaActual = 1;
+      let alumnosPorPagina = 10;
+      let todosLosAlumnos = [
+        {
+          IdAlumno: 1,
+          dniAlumno: 75678080,
+          Nombre: "Edinson",
+          Apellido: "Patricio Mauricio",
+          Direccion: "Calle 1234",
+          EstadoActual: "Activo",
+        },
+        {
+          IdAlumno: 2,
+          dniAlumno: 45635211,
+          Nombre: "Edinson O",
+          Apellido: "Patricio Mauricio",
+          Direccion: "Calle 45",
+          EstadoActual: "Activo",
+        },
+        {
+          IdAlumno: 3,
+          dniAlumno: 12345678,
+          Nombre: "María",
+          Apellido: "González",
+          Direccion: "Av. Principal 567",
+          EstadoActual: "Activo",
+        },
+        {
+          IdAlumno: 4,
+          dniAlumno: 87654321,
+          Nombre: "Juan",
+          Apellido: "Pérez",
+          Direccion: "Jr. Los Pinos 890",
+          EstadoActual: "Inactivo",
+        },
+        {
+          IdAlumno: 5,
+          dniAlumno: 11223344,
+          Nombre: "Ana",
+          Apellido: "Torres",
+          Direccion: "Calle Las Flores 123",
+          EstadoActual: "Activo",
+        },
+        {
+          IdAlumno: 6,
+          dniAlumno: 99887766,
+          Nombre: "Carlos",
+          Apellido: "Ramírez",
+          Direccion: "Av. Los Cedros 456",
+          EstadoActual: "Retirado",
+        },
+      ];
+      let alumnosFiltrados = [];
+
+      function init() {
+        const modalElement = document.getElementById("modalAlumno");
+        modalAlumno = new bootstrap.Modal(modalElement);
+        aplicarFiltros();
+
+        const searchInput = document.getElementById("searchDni");
+        searchInput.addEventListener("input", aplicarFiltros);
+
+        // Agregar contadores de caracteres
+        agregarContadorCaracteres("dniAlumno", "dniCounter", 8);
+        agregarContadorCaracteres("nombre", "nombreCounter", 50);
+        agregarContadorCaracteres("apellido", "apellidoCounter", 50);
+        agregarContadorCaracteres("direccion", "direccionCounter", 100);
+
+        // Validar solo números en DNI y máximo 8 caracteres
+        document
+          .getElementById("dniAlumno")
+          .addEventListener("input", function (e) {
+            this.value = this.value.replace(/[^0-9]/g, "").substring(0, 8);
+          });
+
+        // Validar DNI al perder el foco
+        document
+          .getElementById("dniAlumno")
+          .addEventListener("blur", function (e) {
+            if (this.value && this.value.length !== 8) {
+              this.classList.add("is-invalid");
+            } else {
+              this.classList.remove("is-invalid");
+            }
+          });
+      }
+
+      function agregarContadorCaracteres(inputId, counterId, maxLength) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+
+        input.addEventListener("input", function () {
+          const length = this.value.length;
+          counter.textContent = `${length}/${maxLength} caracteres`;
+
+          // Cambiar color según proximidad al límite
+          if (length >= maxLength) {
+            counter.classList.add("danger");
+            counter.classList.remove("warning");
+          } else if (length >= maxLength * 0.8) {
+            counter.classList.add("warning");
+            counter.classList.remove("danger");
+          } else {
+            counter.classList.remove("warning", "danger");
+          }
+        });
+      }
+
+      function aplicarFiltros() {
+        const searchValue = document
+          .getElementById("searchDni")
+          .value.toLowerCase()
+          .trim();
+        const filtroEstado = document.getElementById("filtroEstado").value;
+
+        let alumnosFiltradosPorEstado = todosLosAlumnos;
+
+        if (filtroEstado === "activos") {
+          alumnosFiltradosPorEstado = todosLosAlumnos.filter(
+            (alumno) => alumno.EstadoActual === "Activo"
+          );
+        } else if (filtroEstado === "inactivos") {
+          alumnosFiltradosPorEstado = todosLosAlumnos.filter(
+            (alumno) => alumno.EstadoActual !== "Activo"
+          );
+        }
+
+        if (!searchValue) {
+          alumnosFiltrados = alumnosFiltradosPorEstado;
+        } else {
+          alumnosFiltrados = alumnosFiltradosPorEstado.filter((alumno) => {
+            const dni = alumno.dniAlumno.toString().toLowerCase();
+            const nombre = alumno.Nombre.toLowerCase();
+            const apellido = alumno.Apellido.toLowerCase();
+            return (
+              dni.includes(searchValue) ||
+              nombre.includes(searchValue) ||
+              apellido.includes(searchValue)
+            );
+          });
+        }
+
+        paginaActual = 1;
+        renderizarTabla();
+      }
+
+      function renderizarTabla() {
+        const body = document.getElementById("body-alumnos");
+        body.innerHTML = "";
+
+        if (alumnosFiltrados.length === 0) {
+          body.innerHTML = `<tr><td colspan="7" class="text-center py-4"><i class="bi bi-inbox" style="font-size: 3rem; color: #ccc"></i><p class="text-muted">No hay alumnos que coincidan con el filtro</p></td></tr>`;
+          document.getElementById("paginationInfo").textContent =
+            "No hay registros";
+          return;
+        }
+
+        const inicio = (paginaActual - 1) * alumnosPorPagina;
+        const fin = inicio + alumnosPorPagina;
+        const alumnosPagina = alumnosFiltrados.slice(inicio, fin);
+
+        alumnosPagina.forEach((alumno) => {
+          const estadoClass =
+            alumno.EstadoActual === "Activo"
+              ? "badge bg-success"
+              : alumno.EstadoActual === "Inactivo"
+              ? "badge bg-danger"
+              : "badge bg-warning";
+          const esActivo = alumno.EstadoActual === "Activo";
+
+          body.innerHTML += `
+                    <tr>
+                        <td>${alumno.IdAlumno}</td>
+                        <td>${alumno.dniAlumno}</td>
+                        <td>${alumno.Nombre}</td>
+                        <td>${alumno.Apellido}</td>
+                        <td>${alumno.Direccion}</td>
+                        <td><span class="${estadoClass}">${
+            alumno.EstadoActual
+          }</span></td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editarAlumno(${
+                              alumno.dniAlumno
+                            })">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                            ${
+                              esActivo
+                                ? `<button class="btn btn-danger btn-sm" onclick="eliminarAlumno(${alumno.dniAlumno})">
+                                     <i class="bi bi-trash"></i> Eliminar
+                                   </button>`
+                                : `<button class="btn btn-success btn-sm" onclick="activarAlumno(${alumno.dniAlumno})">
+                                     <i class="bi bi-check-circle"></i> Activar
+                                   </button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+        });
+
+        document.getElementById("paginationInfo").textContent = `Mostrando ${
+          inicio + 1
+        } - ${Math.min(fin, alumnosFiltrados.length)} de ${
+          alumnosFiltrados.length
+        } alumnos`;
+        renderizarPaginacion();
+      }
+
+      function renderizarPaginacion() {
+        const totalPaginas = Math.ceil(
+          alumnosFiltrados.length / alumnosPorPagina
+        );
+        const container = document.getElementById("paginationContainer");
+
+        if (totalPaginas <= 1) {
+          container.innerHTML = "";
+          return;
+        }
+
+        let html =
+          '<ul class="pagination pagination-sm justify-content-end mb-0">';
+
+        // Botón anterior
+        html += `
+                <li class="page-item ${paginaActual === 1 ? "disabled" : ""}">
+                    <a class="page-link" href="#" onclick="cambiarPagina(${
+                      paginaActual - 1
+                    }); return false;">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                </li>
+            `;
+
+        // Números de página
+        for (let i = 1; i <= totalPaginas; i++) {
+          if (
+            i === 1 ||
+            i === totalPaginas ||
+            (i >= paginaActual - 1 && i <= paginaActual + 1)
+          ) {
+            html += `
+                        <li class="page-item ${
+                          i === paginaActual ? "active" : ""
+                        }">
+                            <a class="page-link" href="#" onclick="cambiarPagina(${i}); return false;">${i}</a>
+                        </li>
+                    `;
+          } else if (i === paginaActual - 2 || i === paginaActual + 2) {
+            html +=
+              '<li class="page-item disabled"><span class="page-link">...</span></li>';
+          }
+        }
+
+        // Botón siguiente
+        html += `
+                <li class="page-item ${
+                  paginaActual === totalPaginas ? "disabled" : ""
+                }">
+                    <a class="page-link" href="#" onclick="cambiarPagina(${
+                      paginaActual + 1
+                    }); return false;">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            `;
+
+        html += "</ul>";
+        container.innerHTML = html;
+      }
+
+      function cambiarPagina(nuevaPagina) {
+        const totalPaginas = Math.ceil(
+          alumnosFiltrados.length / alumnosPorPagina
+        );
+        if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+
+        paginaActual = nuevaPagina;
+        renderizarTabla();
+      }
+
+      function limpiarBusqueda() {
+        document.getElementById("searchDni").value = "";
+        document.getElementById("filtroEstado").value = "activos";
+        aplicarFiltros();
+      }
+
+      function cambiarElementosPorPagina() {
+        alumnosPorPagina = parseInt(
+          document.getElementById("elementosPorPagina").value
+        );
+        paginaActual = 1;
+        renderizarTabla();
+      }
+
+      function abrirModalAlumno() {
+        document.getElementById("formAlumno").reset();
+        document.getElementById("alumnoId").value = "";
+        document.getElementById("dniAlumno").disabled = false;
+        document.getElementById("modalTituloAlumno").innerText = "Nuevo Alumno";
+
+        // Resetear contadores
+        document.getElementById("dniCounter").textContent = "0/8 caracteres";
+        document.getElementById("nombreCounter").textContent =
+          "0/50 caracteres";
+        document.getElementById("apellidoCounter").textContent =
+          "0/50 caracteres";
+        document.getElementById("direccionCounter").textContent =
+          "0/100 caracteres";
+
+        modalAlumno.show();
+      }
+
+      function editarAlumno(dni) {
+        const alumno = todosLosAlumnos.find((a) => a.dniAlumno === dni);
+        if (!alumno) return;
+
+        document.getElementById("modalTituloAlumno").innerText =
+          "Editar Alumno";
+        document.getElementById("alumnoId").value = alumno.IdAlumno;
+        document.getElementById("dniAlumno").value = alumno.dniAlumno;
+        document.getElementById("nombre").value = alumno.Nombre;
+        document.getElementById("apellido").value = alumno.Apellido;
+        document.getElementById("direccion").value = alumno.Direccion;
+        document.getElementById("estadoActual").value = alumno.EstadoActual;
+        document.getElementById("dniAlumno").disabled = true;
+
+        // Actualizar contadores
+        document.getElementById("dniCounter").textContent = `${
+          alumno.dniAlumno.toString().length
+        }/8 caracteres`;
+        document.getElementById(
+          "nombreCounter"
+        ).textContent = `${alumno.Nombre.length}/50 caracteres`;
+        document.getElementById(
+          "apellidoCounter"
+        ).textContent = `${alumno.Apellido.length}/50 caracteres`;
+        document.getElementById(
+          "direccionCounter"
+        ).textContent = `${alumno.Direccion.length}/100 caracteres`;
+
+        modalAlumno.show();
+      }
+
+      function guardarAlumno() {
+        const id = document.getElementById("alumnoId").value;
+        const dniValue = document.getElementById("dniAlumno").value.trim();
+        const nombre = document.getElementById("nombre").value.trim();
+        const apellido = document.getElementById("apellido").value.trim();
+        const direccion = document.getElementById("direccion").value.trim();
+        const estado = document.getElementById("estadoActual").value;
+
+        // Limpiar clases de validación previas
+        document.getElementById("dniAlumno").classList.remove("is-invalid");
+
+        // Validaciones
+        if (!dniValue || !nombre || !apellido || !direccion) {
+          mostrarAlerta(
+            "Por favor complete todos los campos obligatorios",
+            "danger"
+          );
+          return;
+        }
+
+        // Validar que el DNI tenga exactamente 8 caracteres
+        if (dniValue.length !== 8) {
+          mostrarAlerta("El DNI debe tener exactamente 8 dígitos", "danger");
+          document.getElementById("dniAlumno").classList.add("is-invalid");
+          document.getElementById("dniAlumno").focus();
+          return;
+        }
+
+        // Validar que el DNI solo contenga números
+        if (!/^\d{8}$/.test(dniValue)) {
+          mostrarAlerta(
+            "El DNI debe contener solo números (8 dígitos)",
+            "danger"
+          );
+          document.getElementById("dniAlumno").classList.add("is-invalid");
+          document.getElementById("dniAlumno").focus();
+          return;
+        }
+
+        if (nombre.length > 50) {
+          mostrarAlerta(
+            "El nombre no puede superar los 50 caracteres",
+            "danger"
+          );
+          document.getElementById("nombre").focus();
+          return;
+        }
+
+        if (apellido.length > 50) {
+          mostrarAlerta(
+            "El apellido no puede superar los 50 caracteres",
+            "danger"
+          );
+          document.getElementById("apellido").focus();
+          return;
+        }
+
+        if (direccion.length > 100) {
+          mostrarAlerta(
+            "La dirección no puede superar los 100 caracteres",
+            "danger"
+          );
+          document.getElementById("direccion").focus();
+          return;
+        }
+
+        const dni = parseInt(dniValue);
+
+        if (id) {
+          // Modo edición - NO validamos DNI porque está deshabilitado
+          const alumno = todosLosAlumnos.find((a) => a.IdAlumno == id);
+          if (alumno) {
+            alumno.Nombre = nombre;
+            alumno.Apellido = apellido;
+            alumno.Direccion = direccion;
+            alumno.EstadoActual = estado;
+          }
+          mostrarAlerta("✓ Alumno actualizado exitosamente", "success");
+        } else {
+          // Modo creación - Verificar si el DNI ya existe
+          const alumnoExistente = todosLosAlumnos.find(
+            (a) => a.dniAlumno === dni
+          );
+          if (alumnoExistente) {
+            mostrarAlerta(
+              "⚠ Error: Ya existe un alumno con el DNI " +
+                dniValue +
+                " (ID: " +
+                alumnoExistente.IdAlumno +
+                ")",
+              "danger"
+            );
+            document.getElementById("dniAlumno").classList.add("is-invalid");
+            document.getElementById("dniAlumno").focus();
+            return;
+          }
+
+          // Generar un ID único
+          const nuevoId =
+            todosLosAlumnos.length > 0
+              ? Math.max(...todosLosAlumnos.map((a) => a.IdAlumno)) + 1
+              : 1;
+
+          todosLosAlumnos.push({
+            IdAlumno: nuevoId,
+            dniAlumno: dni,
+            Nombre: nombre,
+            Apellido: apellido,
+            Direccion: direccion,
+            EstadoActual: estado,
+          });
+          mostrarAlerta(
+            "✓ Alumno creado exitosamente (ID: " +
+              nuevoId +
+              ", DNI: " +
+              dniValue +
+              ")",
+            "success"
+          );
+        }
+
+        modalAlumno.hide();
+        aplicarFiltros();
+      }
+
+      function eliminarAlumno(dni) {
+        if (!confirm("¿Está seguro de marcar este alumno como inactivo?"))
+          return;
+
+        const alumno = todosLosAlumnos.find((a) => a.dniAlumno === dni);
+        if (alumno) {
+          alumno.EstadoActual = "Inactivo";
+          mostrarAlerta("Alumno marcado como inactivo", "success");
+          aplicarFiltros();
+        }
+      }
+
+      function activarAlumno(dni) {
+        if (!confirm("¿Está seguro de activar este alumno?")) return;
+
+        const alumno = todosLosAlumnos.find((a) => a.dniAlumno === dni);
+        if (alumno) {
+          alumno.EstadoActual = "Activo";
+          mostrarAlerta("Alumno activado exitosamente", "success");
+          aplicarFiltros();
+        }
+      }
+
+      function mostrarAlerta(mensaje, tipo) {
+        const alertDiv = document.getElementById("alertContainer");
+        alertDiv.innerHTML = `
+                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                    <i class="bi ${
+                      tipo === "success" ? "bi-check-circle" : "bi-x-circle"
+                    }"></i> ${mensaje}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        setTimeout(() => (alertDiv.innerHTML = ""), 3000);
+      }
+
+      window.onload = init;
+    </script>
   </body>
 </html>

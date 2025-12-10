@@ -4,6 +4,7 @@ let modalAlumno = null;
 let paginaActual = 1;
 let alumnosPorPagina = 10;
 let todosLosAlumnos = [];
+let alumnosFiltrados = [];
 
 function initAlumnos() {
   const body = document.getElementById("body-alumnos");
@@ -13,6 +14,11 @@ function initAlumnos() {
   modalAlumno = modalElement ? new bootstrap.Modal(modalElement) : null;
 
   cargarAlumnos();
+  
+  const searchInput = document.getElementById("searchDni");
+  if (searchInput) {
+    searchInput.addEventListener("input", aplicarFiltros);
+  }
 }
 
 document.addEventListener("vista-cargada", (e) => {
@@ -35,14 +41,92 @@ async function cargarAlumnos() {
     const res = await fetch(API_ALUMNOS);
     const data = await res.json();
 
+    console.log("Alumnos cargados:", data);
+
     todosLosAlumnos = data;
     paginaActual = 1;
-    renderizarTablaConPaginacion();
+    aplicarFiltros(); // Aplicar filtros automáticamente
 
   } catch (error) {
     console.error("Error cargando alumnos:", error);
     mostrarAlerta("Error al cargar los alumnos", "danger");
   }
+}
+
+// ---------------------------------------------------------
+// APLICAR FILTROS (BÚSQUEDA + ESTADO)
+// ---------------------------------------------------------
+function aplicarFiltros() {
+  const searchValue = document.getElementById("searchDni").value.toLowerCase().trim();
+  const filtroEstado = document.getElementById("filtroEstado").value;
+  
+  // Primero filtrar por estado
+  let alumnosFiltradosPorEstado = todosLosAlumnos;
+  
+  if (filtroEstado === "activos") {
+    alumnosFiltradosPorEstado = todosLosAlumnos.filter(alumno => {
+      const estado = alumno.EstadoActual || alumno.estadoActual;
+      return estado === "Activo" || estado === 1;
+    });
+  } else if (filtroEstado === "inactivos") {
+    alumnosFiltradosPorEstado = todosLosAlumnos.filter(alumno => {
+      const estado = alumno.EstadoActual || alumno.estadoActual;
+      return estado !== "Activo" && estado !== 1;
+    });
+  }
+  
+  // Luego filtrar por búsqueda
+  if (!searchValue) {
+    alumnosFiltrados = alumnosFiltradosPorEstado;
+  } else {
+    alumnosFiltrados = alumnosFiltradosPorEstado.filter(alumno => {
+      const dni = alumno.dniAlumno.toString().toLowerCase();
+      const nombre = (alumno.Nombre || "").toLowerCase();
+      const apellido = (alumno.Apellido || "").toLowerCase();
+      
+      return dni.includes(searchValue) || 
+             nombre.includes(searchValue) || 
+             apellido.includes(searchValue);
+    });
+  }
+  
+  paginaActual = 1;
+  renderizarTablaConPaginacion();
+}
+
+// ---------------------------------------------------------
+// APLICAR FILTRO DE ESTADO (llamada desde el select)
+// ---------------------------------------------------------
+function aplicarFiltroEstado() {
+  aplicarFiltros();
+}
+
+// ---------------------------------------------------------
+// OBTENER ESTADO COMO TEXTO
+// ---------------------------------------------------------
+function obtenerEstadoTexto(estado) {
+  // Manejar tanto string como número
+  if (estado === "Activo" || estado === 1) {
+    return "Activo";
+  } else if (estado === "Inactivo" || estado === 0) {
+    return "Inactivo";
+  } else if (estado === "Retirado") {
+    return "Retirado";
+  }
+  return "Inactivo"; // Por defecto
+}
+
+function obtenerEstadoClass(estado) {
+  const estadoTexto = obtenerEstadoTexto(estado);
+  
+  if (estadoTexto === "Activo") {
+    return "badge bg-success";
+  } else if (estadoTexto === "Inactivo") {
+    return "badge bg-danger";
+  } else if (estadoTexto === "Retirado") {
+    return "badge bg-warning";
+  }
+  return "badge bg-secondary";
 }
 
 // ---------------------------------------------------------
@@ -54,43 +138,53 @@ function renderizarTablaConPaginacion() {
 
   body.innerHTML = "";
 
-  if (todosLosAlumnos.length === 0) {
+  if (alumnosFiltrados.length === 0) {
     body.innerHTML = `
       <tr>
-        <td colspan="7" class="text-center">No hay alumnos registrados</td>
+        <td colspan="7" class="text-center">
+          <div class="py-4">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc"></i>
+            <p class="text-muted">No hay alumnos que coincidan con el filtro</p>
+          </div>
+        </td>
       </tr>
     `;
-    document.getElementById("paginationContainer").innerHTML = "";
+    const paginationContainer = document.getElementById("paginationContainer");
+    if (paginationContainer) paginationContainer.innerHTML = "";
     actualizarInfoPaginacion();
     return;
   }
 
-  // Calcular índices de paginación
   const inicio = (paginaActual - 1) * alumnosPorPagina;
   const fin = inicio + alumnosPorPagina;
-  const alumnosPagina = todosLosAlumnos.slice(inicio, fin);
+  const alumnosPagina = alumnosFiltrados.slice(inicio, fin);
 
-  // Renderizar alumnos de la página actual
   alumnosPagina.forEach((alumno) => {
-    const estadoClass = alumno.estadoActual === 'Activo' ? 'badge bg-success' : 
-                       alumno.estadoActual === 'Inactivo' ? 'badge bg-warning' : 
-                       'badge bg-danger';
+    const estado = alumno.EstadoActual || alumno.estadoActual;
+    const estadoTexto = obtenerEstadoTexto(estado);
+    const estadoClass = obtenerEstadoClass(estado);
+    const esActivo = estadoTexto === "Activo";
 
     body.innerHTML += `
       <tr>
-        <td>${alumno.IdAlumno}</td>
-        <td>${alumno.dniAlumno}</td>
-        <td>${alumno.Nombre ?? ""}</td>
-        <td>${alumno.Apellido ?? ""}</td>
-        <td>${alumno.Direccion ?? ""}</td>
-        <td><span class="${estadoClass}">${alumno.EstadoActual}</span></td>
+        <td>${alumno.IdAlumno || alumno.idAlumno || ''}</td>
+        <td>${alumno.dniAlumno || ''}</td>
+        <td>${alumno.Nombre || ''}</td>
+        <td>${alumno.Apellido || ''}</td>
+        <td>${alumno.Direccion || ''}</td>
+        <td><span class="${estadoClass}">${estadoTexto}</span></td>
         <td>
           <button class="btn btn-warning btn-sm" onclick="editarAlumno(${alumno.dniAlumno})">
             <i class="bi bi-pencil"></i> Editar
           </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarAlumno(${alumno.dniAlumno})">
-            <i class="bi bi-trash"></i> Eliminar
-          </button>
+          ${esActivo 
+            ? `<button class="btn btn-danger btn-sm" onclick="eliminarAlumno(${alumno.dniAlumno})">
+                 <i class="bi bi-trash"></i> Eliminar
+               </button>`
+            : `<button class="btn btn-success btn-sm" onclick="activarAlumno(${alumno.dniAlumno})">
+                 <i class="bi bi-check-circle"></i> Activar
+               </button>`
+          }
         </td>
       </tr>
     `;
@@ -104,7 +198,7 @@ function renderizarTablaConPaginacion() {
 // RENDERIZAR CONTROLES DE PAGINACIÓN
 // ---------------------------------------------------------
 function renderizarPaginacion() {
-  const totalPaginas = Math.ceil(todosLosAlumnos.length / alumnosPorPagina);
+  const totalPaginas = Math.ceil(alumnosFiltrados.length / alumnosPorPagina);
   const paginationContainer = document.getElementById("paginationContainer");
   
   if (!paginationContainer || totalPaginas <= 1) {
@@ -112,18 +206,16 @@ function renderizarPaginacion() {
     return;
   }
 
-  let paginationHTML = '<ul class="pagination justify-content-center mb-0">';
+  let paginationHTML = '<ul class="pagination justify-content-end mb-0">';
 
-  // Botón Anterior
   paginationHTML += `
     <li class="page-item ${paginaActual === 1 ? 'disabled' : ''}">
       <a class="page-link" href="#" onclick="cambiarPagina(${paginaActual - 1}); return false;">
-        <i class="bi bi-chevron-left"></i> Anterior
+        <i class="bi bi-chevron-left"></i>
       </a>
     </li>
   `;
 
-  // Números de página
   const rango = 2;
   let inicio = Math.max(1, paginaActual - rango);
   let fin = Math.min(totalPaginas, paginaActual + rango);
@@ -158,11 +250,10 @@ function renderizarPaginacion() {
     `;
   }
 
-  // Botón Siguiente
   paginationHTML += `
     <li class="page-item ${paginaActual === totalPaginas ? 'disabled' : ''}">
       <a class="page-link" href="#" onclick="cambiarPagina(${paginaActual + 1}); return false;">
-        Siguiente <i class="bi bi-chevron-right"></i>
+        <i class="bi bi-chevron-right"></i>
       </a>
     </li>
   `;
@@ -175,7 +266,7 @@ function renderizarPaginacion() {
 // CAMBIAR PÁGINA
 // ---------------------------------------------------------
 function cambiarPagina(nuevaPagina) {
-  const totalPaginas = Math.ceil(todosLosAlumnos.length / alumnosPorPagina);
+  const totalPaginas = Math.ceil(alumnosFiltrados.length / alumnosPorPagina);
   
   if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
   
@@ -191,8 +282,8 @@ function actualizarInfoPaginacion() {
   if (!infoElement) return;
 
   const inicio = (paginaActual - 1) * alumnosPorPagina + 1;
-  const fin = Math.min(paginaActual * alumnosPorPagina, todosLosAlumnos.length);
-  const total = todosLosAlumnos.length;
+  const fin = Math.min(paginaActual * alumnosPorPagina, alumnosFiltrados.length);
+  const total = alumnosFiltrados.length;
 
   if (total === 0) {
     infoElement.textContent = "No hay registros";
@@ -214,68 +305,23 @@ function cambiarElementosPorPagina() {
 }
 
 // ---------------------------------------------------------
-// BUSCAR ALUMNO POR DNI
+// BUSCAR ALUMNO POR DNI (compatibilidad)
 // ---------------------------------------------------------
 async function buscarAlumnoPorDni() {
-  const dni = document.getElementById("searchDni").value;
-  
-  if (!dni) {
-    mostrarAlerta("Por favor ingrese un DNI", "warning");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_ALUMNOS}/dni/${dni}`);
-    
-    if (!res.ok) {
-      mostrarAlerta("Alumno no encontrado", "danger");
-      cargarAlumnos(); // Recargar todos
-      return;
-    }
-
-    const alumno = await res.json();
-    
-    const body = document.getElementById("body-alumnos");
-    if (!body) return;
-
-    const estadoClass = alumno.estadoActual === 'Activo' ? 'badge bg-success' : 
-                       alumno.estadoActual === 'Inactivo' ? 'badge bg-warning' : 
-                       'badge bg-danger';
-
-    body.innerHTML = `
-      <tr>
-        <td>${alumno.IdAlumno}</td>
-        <td>${alumno.dniAlumno}</td>
-        <td>${alumno.Nombre ?? ""}</td>
-        <td>${alumno.Apellido ?? ""}</td>
-        <td>${alumno.Direccion ?? ""}</td>
-        <td><span class="${estadoClass}">${alumno.estadoActual}</span></td>
-        <td>
-          <button class="btn btn-warning btn-sm" onclick="editarAlumno(${alumno.dniAlumno})">
-            <i class="bi bi-pencil"></i> Editar
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarAlumno(${alumno.dniAlumno})">
-            <i class="bi bi-trash"></i> Eliminar
-          </button>
-        </td>
-      </tr>
-    `;
-
-    document.getElementById("searchDni").value = "";
-    mostrarAlerta("Alumno encontrado", "success");
-
-  } catch (error) {
-    console.error("Error buscando alumno:", error);
-    mostrarAlerta("Error al buscar alumno", "danger");
-  }
+  aplicarFiltros();
 }
 
 // ---------------------------------------------------------
 // LIMPIAR BÚSQUEDA Y LISTAR TODOS
 // ---------------------------------------------------------
 function limpiarBusqueda() {
-  document.getElementById("searchDni").value = "";
-  cargarAlumnos();
+  const searchInput = document.getElementById("searchDni");
+  if (searchInput) searchInput.value = "";
+  
+  const filtroEstado = document.getElementById("filtroEstado");
+  if (filtroEstado) filtroEstado.value = "activos"; // Volver a mostrar solo activos
+  
+  aplicarFiltros();
 }
 
 // ---------------------------------------------------------
@@ -287,7 +333,9 @@ function abrirModalAlumno() {
     if (modalElement) modalAlumno = new bootstrap.Modal(modalElement);
   }
 
-  document.getElementById("formAlumno").reset();
+  const form = document.getElementById("formAlumno");
+  if (form) form.reset();
+  
   document.getElementById("alumnoId").value = "";
   document.getElementById("dniAlumno").disabled = false;
   document.getElementById("modalTituloAlumno").innerText = "Nuevo Alumno";
@@ -300,9 +348,19 @@ function abrirModalAlumno() {
 // ---------------------------------------------------------
 async function editarAlumno(dni) {
   try {
+    console.log("Editando alumno con DNI:", dni);
+    
     const res = await fetch(`${API_ALUMNOS}/dni/${dni}`);
+    
+    if (!res.ok) {
+      console.error("Error en la respuesta:", res.status);
+      mostrarAlerta("Error al cargar el alumno", "danger");
+      return;
+    }
+    
     const alumno = await res.json();
-
+    console.log("Datos del alumno recibidos:", alumno);
+    
     if (!modalAlumno) {
       const modalElement = document.getElementById("modalAlumno");
       if (modalElement) modalAlumno = new bootstrap.Modal(modalElement);
@@ -310,12 +368,14 @@ async function editarAlumno(dni) {
 
     document.getElementById("modalTituloAlumno").innerText = "Editar Alumno";
 
-    document.getElementById("alumnoId").value = alumno.IdAlumno;
-    document.getElementById("dniAlumno").value = alumno.dniAlumno;
-    document.getElementById("nombre").value = alumno.Nombre ?? "";
-    document.getElementById("apellido").value = alumno.Apellido ?? "";
-    document.getElementById("direccion").value = alumno.Direccion ?? "";
-    document.getElementById("estadoActual").value = alumno.EstadoActual ?? "Activo";
+    document.getElementById("alumnoId").value = alumno.IdAlumno || alumno.idAlumno || "";
+    document.getElementById("dniAlumno").value = alumno.dniAlumno || "";
+    document.getElementById("nombre").value = alumno.Nombre || "";
+    document.getElementById("apellido").value = alumno.Apellido || "";
+    document.getElementById("direccion").value = alumno.Direccion || "";
+    
+    const estado = alumno.EstadoActual || alumno.estadoActual || "Activo";
+    document.getElementById("estadoActual").value = estado;
 
     document.getElementById("dniAlumno").disabled = true;
 
@@ -332,45 +392,62 @@ async function editarAlumno(dni) {
 // ---------------------------------------------------------
 async function guardarAlumno() {
   const id = document.getElementById("alumnoId").value;
-  const dni = parseInt(document.getElementById("dniAlumno").value);
+  const dniValue = document.getElementById("dniAlumno").value;
+  const dni = parseInt(dniValue);
+
+  if (!dniValue || isNaN(dni)) {
+    mostrarAlerta("Por favor ingrese un DNI válido", "warning");
+    return;
+  }
+
+  const nombre = document.getElementById("nombre").value.trim();
+  const apellido = document.getElementById("apellido").value.trim();
+  const direccion = document.getElementById("direccion").value.trim();
+
+  if (!nombre || !apellido || !direccion) {
+    mostrarAlerta("Por favor complete todos los campos obligatorios", "warning");
+    return;
+  }
 
   const alumno = {
     IdAlumno: id ? parseInt(id) : 0,
     dniAlumno: dni,
-    Nombre: document.getElementById("nombre").value,
-    Apellido: document.getElementById("apellido").value,
-    Direccion: document.getElementById("direccion").value,
-    EstadoActual: document.getElementById("estadoActual").value
+    Nombre: nombre,
+    Apellido: apellido,
+    Direccion: direccion,
+    EstadoActual: document.getElementById("estadoActual").value || "Activo"
   };
+
+  console.log("Guardando alumno:", alumno);
 
   try {
     let res;
     if (id) {
-      // ACTUALIZAR
       res = await fetch(`${API_ALUMNOS}/${dni}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(alumno),
       });
-      mostrarAlerta("Alumno actualizado exitosamente", "success");
     } else {
-      // CREAR
       res = await fetch(API_ALUMNOS, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(alumno),
       });
-      mostrarAlerta("Alumno creado exitosamente", "success");
     }
 
     if (!res.ok) {
       const error = await res.text();
+      console.error("Error del servidor:", error);
       mostrarAlerta(`Error: ${error}`, "danger");
       return;
     }
 
+    const mensaje = id ? "Alumno actualizado exitosamente" : "Alumno creado exitosamente";
+    mostrarAlerta(mensaje, "success");
+
     modalAlumno?.hide();
-    cargarAlumnos();
+    await cargarAlumnos();
 
   } catch (error) {
     console.error("Error guardando alumno:", error);
@@ -379,16 +456,30 @@ async function guardarAlumno() {
 }
 
 // ---------------------------------------------------------
-// ELIMINAR ALUMNO
+// ELIMINAR ALUMNO (CAMBIAR A INACTIVO)
 // ---------------------------------------------------------
 async function eliminarAlumno(dni) {
-  if (!confirm("¿Está seguro de eliminar este alumno?")) {
+  if (!confirm("¿Está seguro de marcar este alumno como inactivo? Podrá reactivarlo después si lo necesita.")) {
     return;
   }
 
   try {
+    // Buscar el alumno primero
+    const resGet = await fetch(`${API_ALUMNOS}/dni/${dni}`);
+    if (!resGet.ok) {
+      mostrarAlerta("Error al obtener datos del alumno", "danger");
+      return;
+    }
+    
+    const alumno = await resGet.json();
+    
+    // Actualizar el estado a Inactivo
+    alumno.EstadoActual = "Inactivo";
+    
     const res = await fetch(`${API_ALUMNOS}/${dni}`, {
-      method: "DELETE"
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(alumno),
     });
 
     if (!res.ok) {
@@ -397,12 +488,54 @@ async function eliminarAlumno(dni) {
       return;
     }
 
-    mostrarAlerta("Alumno eliminado exitosamente", "success");
-    cargarAlumnos();
+    mostrarAlerta("Alumno marcado como inactivo exitosamente", "success");
+    await cargarAlumnos();
 
   } catch (error) {
-    console.error("Error eliminando alumno:", error);
-    mostrarAlerta("Error al eliminar alumno", "danger");
+    console.error("Error al inactivar alumno:", error);
+    mostrarAlerta("Error al marcar alumno como inactivo", "danger");
+  }
+}
+
+// ---------------------------------------------------------
+// ACTIVAR ALUMNO
+// ---------------------------------------------------------
+async function activarAlumno(dni) {
+  if (!confirm("¿Está seguro de activar este alumno?")) {
+    return;
+  }
+
+  try {
+    // Buscar el alumno primero
+    const resGet = await fetch(`${API_ALUMNOS}/dni/${dni}`);
+    if (!resGet.ok) {
+      mostrarAlerta("Error al obtener datos del alumno", "danger");
+      return;
+    }
+    
+    const alumno = await resGet.json();
+    
+    // Actualizar el estado a Activo
+    alumno.EstadoActual = "Activo";
+    
+    const res = await fetch(`${API_ALUMNOS}/${dni}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(alumno),
+    });
+
+    if (!res.ok) {
+      const error = await res.text();
+      mostrarAlerta(`Error: ${error}`, "danger");
+      return;
+    }
+
+    mostrarAlerta("Alumno activado exitosamente", "success");
+    await cargarAlumnos();
+
+  } catch (error) {
+    console.error("Error al activar alumno:", error);
+    mostrarAlerta("Error al activar alumno", "danger");
   }
 }
 
@@ -410,11 +543,11 @@ async function eliminarAlumno(dni) {
 // MOSTRAR ALERTAS
 // ---------------------------------------------------------
 function mostrarAlerta(mensaje, tipo = 'success') {
-  // Si tienes un div de alertas en tu HTML
   const alertDiv = document.getElementById('alertContainer');
   if (alertDiv) {
     alertDiv.innerHTML = `
       <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+        <i class="bi ${tipo === 'success' ? 'bi-check-circle' : tipo === 'danger' ? 'bi-x-circle' : 'bi-info-circle'}"></i>
         ${mensaje}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
@@ -424,7 +557,6 @@ function mostrarAlerta(mensaje, tipo = 'success') {
       alertDiv.innerHTML = '';
     }, 3000);
   } else {
-    // Fallback: usar console o alert
     console.log(`${tipo.toUpperCase()}: ${mensaje}`);
   }
 }
@@ -436,7 +568,10 @@ window.abrirModalAlumno = abrirModalAlumno;
 window.editarAlumno = editarAlumno;
 window.guardarAlumno = guardarAlumno;
 window.eliminarAlumno = eliminarAlumno;
+window.activarAlumno = activarAlumno;
 window.buscarAlumnoPorDni = buscarAlumnoPorDni;
 window.limpiarBusqueda = limpiarBusqueda;
 window.cambiarPagina = cambiarPagina;
 window.cambiarElementosPorPagina = cambiarElementosPorPagina;
+window.aplicarFiltroEstado = aplicarFiltroEstado;
+window.aplicarFiltros = aplicarFiltros;
