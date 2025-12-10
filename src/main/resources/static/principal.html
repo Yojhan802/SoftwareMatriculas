@@ -59,7 +59,7 @@
           <div class="section-title">Dashboard</div>
           <ul class="list-unstyled ms-3">
             <li>
-              <a href="#" onclick="loadView('dashboard/dashboard.html')"
+              <a href="#" onclick="loadViewOriginal('dashboard/dashboard.html')"
                 >Dashboard Principal</a
               >
             </li>
@@ -71,12 +71,14 @@
           <div class="section-title">Gestión</div>
           <ul class="list-unstyled ms-3">
             <li>
-              <a href="#" onclick="loadView('Alumnos/alumnos.html')"
+              <a href="#" onclick="loadViewOriginal('Alumnos/alumnos.html')"
                 >Gestión de Alumnos</a
               >
             </li>
             <li>
-              <a href="#" onclick="loadView('Matriculas/matriculas.html')"
+              <a
+                href="#"
+                onclick="loadViewOriginal('Matriculas/matriculas.html')"
                 >Nueva Matrícula</a
               >
             </li>
@@ -102,7 +104,7 @@
                   <a
                     href="#"
                     class="submenu-link"
-                    onclick="cargarVistaPagos('PAGAR')"
+                    onclick="loadViewOriginal('GestionPagos/gestionPagos.html')"
                   >
                     Proceso de Pago
                   </a>
@@ -126,7 +128,7 @@
           <div class="section-title">Reportes</div>
           <ul class="list-unstyled ms-3">
             <li>
-              <a href="#" onclick="loadView('reportes/reportes.html')"
+              <a href="#" onclick="loadViewOriginal('reportes/reportes.html')"
                 >Reportes</a
               >
             </li>
@@ -138,13 +140,10 @@
           <div class="section-title">Configuración</div>
           <ul class="list-unstyled ms-3">
             <li>
-              <a href="#" onclick="loadView('configuracion/cambiarClave.html')"
+              <a
+                href="#"
+                onclick="loadViewOriginal('configuracion/cambiarClave.html')"
                 >Cambiar Clave</a
-              >
-            </li>
-            <li>
-              <a href="#" style="color: #e74c3c" onclick="cerrarSesion()"
-                >Cerrar Sesión</a
               >
             </li>
           </ul>
@@ -158,7 +157,7 @@
           <h5 class="m-0" id="current-title">Dashboard Principal</h5>
           <div>
             <span class="me-3">Hola, [Nombre Usuario]!</span>
-            <button class="btn btn-sm btn-danger" onclick="cerrarSesion()">
+            <button class="btn btn-sm btn-danger" id="logout-btn">
               Cerrar sesión
             </button>
           </div>
@@ -218,198 +217,12 @@
       src="https://kit.fontawesome.com/your-fontawesome-kit.js"
       crossorigin="anonymous"
     ></script>
-
+    <script src="js/principal.js"></script>
     <!-- Primero auth.js para tener authManager disponible -->
-    <script src="js/auth.js"></script>
 
     <!-- Luego los otros scripts -->
     <script src="js/alumnos.js"></script>
     <script src="js/gestionPagos.js"></script>
     <script src="js/matriculas.js"></script>
-
-    <script>
-      // ========== VARIABLES GLOBALES ==========
-      let modoVistaPagos = "PAGAR";
-
-      // ========== FUNCIÓN ORIGINAL loadView (sin permisos) ==========
-      function loadViewOriginal(view) {
-        console.log("Cargando vista:", view);
-
-        // Mostrar indicador de carga
-        document.getElementById("auth-loading").style.display = "block";
-
-        fetch(view)
-          .then((res) => {
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}`);
-            }
-            return res.text();
-          })
-          .then((html) => {
-            document.getElementById("content-area").innerHTML = html;
-
-            // Actualizar título en la topbar si el archivo HTML tiene un título específico
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = html;
-            const titleElement = tempDiv.querySelector("h1, h2, h3");
-            if (titleElement) {
-              document.getElementById("current-title").textContent =
-                titleElement.textContent;
-            }
-
-            // Para tooltips
-            var tooltipTriggerList = [].slice.call(
-              document.querySelectorAll('[data-bs-toggle="tooltip"]')
-            );
-            tooltipTriggerList.map((el) => new bootstrap.Tooltip(el));
-
-            // Disparar evento para que otros scripts sepan que se cargó una vista
-            document.dispatchEvent(
-              new CustomEvent("vista-cargada", { detail: view })
-            );
-
-            // Ocultar indicador de carga
-            document.getElementById("auth-loading").style.display = "none";
-          })
-          .catch((error) => {
-            console.error("Error al cargar vista:", error);
-            document.getElementById("content-area").innerHTML =
-              "<div class='alert alert-danger'>" +
-              "  <h4>Error al cargar la vista</h4>" +
-              "  <p>No se pudo cargar: " +
-              view +
-              "</p>" +
-              "  <p><small>" +
-              error.message +
-              "</small></p>" +
-              "</div>";
-
-            // Ocultar indicador de carga
-            document.getElementById("auth-loading").style.display = "none";
-          });
-      }
-
-      // ========== FUNCIÓN loadView CON PERMISOS ==========
-      window.loadView = async function (view) {
-        console.log("loadView con permisos llamado para:", view);
-
-        // Verificar permisos para vistas específicas
-        const protectedViews = {
-          "Alumnos/alumnos.html": "ALUMNOS",
-          "Matriculas/matriculas.html": "MATRICULA",
-          "GestionPagos/gestionPagos.html": "PAGOS",
-          "reportes/reportes.html": "REPORTES",
-        };
-
-        const resource = protectedViews[view];
-
-        if (resource) {
-          try {
-            console.log("Verificando permiso para recurso:", resource);
-            const hasPermission = await authManager.checkPermission(resource);
-            console.log("Resultado permiso:", hasPermission);
-
-            if (!hasPermission) {
-              alert("No tiene permisos para acceder a esta sección");
-              return;
-            }
-          } catch (error) {
-            console.error("Error al verificar permiso:", error);
-            alert("Error al verificar permisos. Intente nuevamente.");
-            return;
-          }
-        }
-
-        // Si tiene permisos, cargar la vista
-        loadViewOriginal(view);
-      };
-
-      // ========== OTRAS FUNCIONES ==========
-      window.cargarVistaPagos = function (modo) {
-        modoVistaPagos = modo;
-        window.loadView("GestionPagos/gestionPagos.html");
-      };
-
-      // Inicializar el chat flotante
-      document
-        .getElementById("open-chat")
-        ?.addEventListener("click", function () {
-          alert("Función de chat será implementada próximamente");
-        });
-
-      // ========== INICIALIZACIÓN PRINCIPAL ==========
-      document.addEventListener("DOMContentLoaded", async () => {
-        console.log("Inicialización principal iniciada");
-
-        // Mostrar indicador de carga
-        document.getElementById("auth-loading").style.display = "block";
-
-        try {
-          // 1. Verificar autenticación
-          console.log("Verificando autenticación...");
-          const isAuthenticated = await authManager.checkAuth();
-
-          if (!isAuthenticated) {
-            console.log("Usuario no autenticado, redirigiendo...");
-            return;
-          }
-
-          // 2. Obtener información del usuario
-          console.log("Obteniendo información del usuario...");
-          const user = await authManager.getUserInfo();
-          console.log("Usuario obtenido:", user);
-
-          // 3. Actualizar UI
-          console.log("Actualizando UI...");
-          const userElement = document.querySelector(".me-3");
-          if (userElement) {
-            userElement.textContent = `Hola, ${user.nombreCompleto}!`;
-          }
-
-          // 4. Configurar sidebar según rol
-          console.log("Configurando sidebar para rol:", user.rol?.nombreRol);
-          const sections = document.querySelectorAll(".section-title");
-          sections.forEach((section) => {
-            const sectionText = section.textContent.trim();
-            const parentDiv = section.closest("div");
-
-            if (!parentDiv) return;
-
-            if (user.esSecretaria || user.rol?.nombreRol === "SECRETARIA") {
-              // Secretaria ve todo menos reportes
-              if (sectionText === "Reportes") {
-                parentDiv.style.display = "none";
-                console.log("Ocultando sección Reportes para secretaria");
-              }
-            } else if (user.esDirector || user.rol?.nombreRol === "DIRECTOR") {
-              // Director solo ve dashboard y reportes
-              if (sectionText === "Gestión" || sectionText === "Pagos") {
-                parentDiv.style.display = "none";
-                console.log("Ocultando sección", sectionText, "para director");
-              }
-            }
-          });
-
-          console.log("Inicialización completada exitosamente");
-        } catch (error) {
-          console.error("Error en inicialización:", error);
-          alert(
-            "Error al inicializar la aplicación. Intente recargar la página."
-          );
-        } finally {
-          // Ocultar indicador de carga
-          document.getElementById("auth-loading").style.display = "none";
-        }
-      });
-
-      // ========== MANEJO DE ERRORES GLOBALES ==========
-      window.addEventListener("error", function (event) {
-        console.error("Error global:", event.error);
-      });
-
-      window.addEventListener("unhandledrejection", function (event) {
-        console.error("Promesa rechazada no manejada:", event.reason);
-      });
-    </script>
   </body>
 </html>

@@ -19,4 +19,6 @@ public interface UsuarioService {
     Optional<Usuario> login(LoginDTO loginDTO);
 
     Optional<Usuario> findById(Integer usuarioId);
+
+    Usuario finByUserName(String username);
 }

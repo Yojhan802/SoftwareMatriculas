@@ -1,7 +1,11 @@
 package com.example.demo.controllers;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.Services.UsuarioService;
 import com.example.demo.dto.ActualizarUsuarioDTO;
 import com.example.demo.dto.CambiarContraDTO;
-import com.example.demo.dto.LoginDTO;
 import com.example.demo.dto.RegistroUsuarioDTO;
 import com.example.demo.entity.Usuario;
 
@@ -27,17 +30,18 @@ public class UsuarioController {
         this.userService = userService;
     }
 
+    // ---------------------------- REGISTER ----------------------------
     @PostMapping("/register")
     public ResponseEntity<Usuario> registerUser(@RequestBody RegistroUsuarioDTO registroDTO) {
         try {
             Usuario newUser = userService.registrarNuevoUsuario(registroDTO);
             return new ResponseEntity<>(newUser, HttpStatus.CREATED);
         } catch (RuntimeException e) {
-
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
 
+    // ---------------------------- UPDATE ----------------------------
     @PutMapping("/{userId}")
     public ResponseEntity<Usuario> updateUser(@PathVariable Integer userId, @RequestBody ActualizarUsuarioDTO updateDTO) {
         try {
@@ -48,6 +52,7 @@ public class UsuarioController {
         }
     }
 
+    // ---------------------------- CHANGE PASSWORD ----------------------------
     @PatchMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody CambiarContraDTO changeDTO) {
         try {
@@ -58,10 +63,18 @@ public class UsuarioController {
         }
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
-        return userService.login(loginDTO)
-                .map(user -> ResponseEntity.ok().body("Inicio de sesión exitoso. Usuario ID: " + user.getId()))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales inválidas."));
+    // ---------------------------- GET AUTHENTICATED USER ----------------------------
+    @GetMapping("/me")
+    public ResponseEntity<?> getUsuarioLogueado(Authentication auth) {
+        if (auth == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No autenticado");
+        }
+
+        Usuario user = userService.finByUserName(auth.getName());
+
+        return ResponseEntity.ok(Map.of(
+                "username", user.getUsername(),
+                "rol", user.getRol().getNombreRol()
+        ));
     }
 }

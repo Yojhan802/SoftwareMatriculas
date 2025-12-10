@@ -2,19 +2,17 @@ package com.example.demo.Services;
 
 import java.util.Optional;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.dto.ActualizarUsuarioDTO;
 import com.example.demo.dto.CambiarContraDTO;
 import com.example.demo.dto.LoginDTO;
 import com.example.demo.dto.RegistroUsuarioDTO;
 import com.example.demo.entity.EstadoUsuario;
-
-import com.example.demo.entity.Usuario;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.example.demo.entity.Rol;
+import com.example.demo.entity.Usuario;
 import com.example.demo.repository.RolRepository;
 import com.example.demo.repository.UsuarioRepository;
 
@@ -103,5 +101,11 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public Optional<Usuario> findById(Integer usuarioId) {
         return usuarioRepository.findById(usuarioId);
+    }
+
+    @Override
+    public Usuario finByUserName(String username) {
+        return usuarioRepository.findByNombreUsuario(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 }

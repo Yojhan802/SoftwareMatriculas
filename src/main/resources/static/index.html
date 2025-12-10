@@ -58,7 +58,7 @@
 
       <div id="error-message" class="alert alert-danger d-none"></div>
 
-      <form id="loginForm" method="post">
+      <form id="loginForm" method="post" action="/api/users/login">
         <div class="mb-3">
           <label class="form-label">
             <i class="fas fa-user me-2"></i>Nombre de usuario
@@ -115,72 +115,5 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script>
-      // Verificar si ya está autenticado
-      async function checkAuth() {
-        try {
-          const response = await fetch("/api/auth/user-info", {
-            credentials: "include",
-          });
-
-          if (response.ok) {
-            window.location.href = "/dashboard.html";
-          }
-        } catch (error) {
-          // No autenticado, mostrar formulario
-        }
-      }
-
-      // Manejar login (Spring Security espera formulario tradicional)
-      document
-        .getElementById("loginForm")
-        .addEventListener("submit", async function (e) {
-          e.preventDefault();
-
-          const username = document.getElementById("username").value;
-          const password = document.getElementById("password").value;
-
-          // IMPORTANTE: Spring Security espera application/x-www-form-urlencoded
-          const formData = new URLSearchParams();
-          formData.append("username", username);
-          formData.append("password", password);
-
-          try {
-            const response = await fetch("/api/users/login", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: formData,
-              credentials: "include", // IMPORTANTE para mantener la sesión
-            });
-
-            if (response.ok) {
-              // Redirigir al dashboard
-              window.location.href = "/principal.html";
-            } else {
-              showError("Usuario o contraseña incorrectos");
-            }
-          } catch (error) {
-            console.error("Error de login:", error);
-            showError("Error de conexión con el servidor");
-          }
-        });
-
-      function showError(message) {
-        const errorDiv = document.getElementById("error-message");
-        errorDiv.textContent = message;
-        errorDiv.classList.remove("d-none");
-
-        // Ocultar error después de 5 segundos
-        setTimeout(() => {
-          errorDiv.classList.add("d-none");
-        }, 5000);
-      }
-
-      // Verificar autenticación al cargar la página
-      document.addEventListener("DOMContentLoaded", checkAuth);
-    </script>
   </body>
 </html>
