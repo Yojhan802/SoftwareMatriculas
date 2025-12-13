@@ -28,7 +28,7 @@ public class AlumnoController {
         return ResponseEntity.ok(service.crearAlumnos(dto));
     }
 
-     @GetMapping("/{dni}")
+     @GetMapping("/dni/{dni}")
     public ResponseEntity<AlumnoDTO> obtener(@PathVariable int dni) {
         return ResponseEntity.ok(service.ObtenerAlumnoPorDni(dni));
     }
