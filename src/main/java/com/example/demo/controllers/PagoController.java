@@ -25,7 +25,8 @@ public class PagoController {
     }
 
     // ==========================================
-    // RUTAS DE GESTIÓN (Búsqueda y Anulación)    // Prefijo: /api/gestion-pagos    // ==========================================
+    // RUTAS DE GESTIÓN
+    // ==========================================
     @GetMapping("/api/gestion-pagos/pendientes")
     public ResponseEntity<List<Cuota>> buscarDeudas(@RequestParam String termino) {
         List<Cuota> cuotas = cuotaRepo.buscarPorAlumno(termino);
@@ -53,15 +54,22 @@ public class PagoController {
     }
 
     // ==========================================
-    // RUTA DE PROCESO DE PAGO (La que faltaba)    // Prefijo: /api/pagos    // ==========================================
+    // RUTA DE PROCESO DE PAGO (ACTUALIZADA)
+    // ==========================================
     @PostMapping("/api/pagos/realizar")
-    public ResponseEntity<ReciboDetalleDTO> realizarPago(@RequestBody PagoDTO pagoDTO) {
+    // 1. Cambiamos el parámetro a List<PagoDTO>
+    // 2. El retorno ahora es una lista de recibos List<ReciboDetalleDTO>
+    public ResponseEntity<?> realizarPago(@RequestBody List<PagoDTO> listaPagos) {
         try {
-            ReciboDetalleDTO recibo = pagoService.procesarPago(pagoDTO);
-            return new ResponseEntity<>(recibo, HttpStatus.CREATED);
+            // Llamamos al método nuevo del servicio que procesa la lista
+            List<ReciboDetalleDTO> recibos = pagoService.procesarPagos(listaPagos);
+
+            return new ResponseEntity<>(recibos, HttpStatus.CREATED);
+
         } catch (RuntimeException e) {
-            // Devolvemos error 400 con el mensaje de la excepción (ej: "Cuota ya pagada")
-            return ResponseEntity.badRequest().build();
+            // IMPORTANTE: Devolver el mensaje de error (e.getMessage())
+            // para que el Frontend pueda mostrar "Debes pagar Marzo antes que Abril"
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }
