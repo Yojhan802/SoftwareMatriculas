@@ -1,4 +1,4 @@
-package com.example.demo.Services.Impl;
+package com.example.demo.Services;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,7 +9,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.Services.PagoService;
 import com.example.demo.dto.PagoDTO;
 import com.example.demo.dto.ReciboDetalleDTO;
 import com.example.demo.entity.Cuota;
@@ -58,8 +57,8 @@ public class PagoServiceImpl implements PagoService {
             );
 
             if (deudaPendiente) {
-                throw new RuntimeException("BLOQUEO: El alumno debe cuotas anteriores a " + cuota.getMes() +
-                        ". Debe regularizar su deuda en orden cronológico.");
+                throw new RuntimeException("BLOQUEO: El alumno debe cuotas anteriores a " + cuota.getMes()
+                        + ". Debe regularizar su deuda en orden cronológico.");
             }
 
             // D. Validar monto exacto (Opcional, según tu regla de negocio)
@@ -130,7 +129,6 @@ public class PagoServiceImpl implements PagoService {
     }
 
     // --- MÉTODOS PRIVADOS ---
-
     private String generarNumeroUnico() {
         // Aquí tu lógica de correlativo. Ejemplo simple:
         return "REC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();

@@ -54,13 +54,11 @@ public class SecurityConfig {
                         "/login.html",
                         "/api/users/login",
                         "/api/users/register",
-                        "/api/users/me",
-                        "/api/alumnos/**",
-                        "/api/matricula/**"
+                        "/api/users/me"
                 ).permitAll()
                 // Ejemplo de acceso por roles (ajusta a tus necesidades)
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").permitAll()  //hasAnyRole("SECRETARIA", "ADMIN"
+                .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
                 .requestMatchers("/api/director/**").hasAnyRole("DIRECTOR", "ADMIN")
                 // Cualquier otra request necesita estar logueado
                 .anyRequest().authenticated()
