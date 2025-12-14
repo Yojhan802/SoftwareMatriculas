@@ -19,6 +19,23 @@ function initAlumnos() {
   if (searchInput) {
     searchInput.addEventListener("input", aplicarFiltros);
   }
+
+  // Agregar validación de solo números en DNI
+  const dniInput = document.getElementById("dniAlumno");
+  if (dniInput) {
+    dniInput.addEventListener("input", function (e) {
+      this.value = this.value.replace(/[^0-9]/g, "").substring(0, 8);
+      this.classList.remove("is-invalid");
+    });
+
+    dniInput.addEventListener("blur", function (e) {
+      if (this.value && this.value.length !== 8) {
+        this.classList.add("is-invalid");
+      } else {
+        this.classList.remove("is-invalid");
+      }
+    });
+  }
 }
 
 document.addEventListener("vista-cargada", (e) => {
@@ -338,7 +355,14 @@ function abrirModalAlumno() {
   
   document.getElementById("alumnoId").value = "";
   document.getElementById("dniAlumno").disabled = false;
+  document.getElementById("dniAlumno").classList.remove("is-invalid");
   document.getElementById("modalTituloAlumno").innerText = "Nuevo Alumno";
+
+  // Limpiar alertas del modal si existen
+  const alertContainerModal = document.getElementById('alertContainerModal');
+  if (alertContainerModal) {
+    alertContainerModal.innerHTML = '';
+  }
 
   modalAlumno.show();
 }
@@ -378,6 +402,7 @@ async function editarAlumno(dni) {
     document.getElementById("estadoActual").value = estado;
 
     document.getElementById("dniAlumno").disabled = true;
+    document.getElementById("dniAlumno").classList.remove("is-invalid");
 
     modalAlumno.show();
 
@@ -392,11 +417,34 @@ async function editarAlumno(dni) {
 // ---------------------------------------------------------
 async function guardarAlumno() {
   const id = document.getElementById("alumnoId").value;
-  const dniValue = document.getElementById("dniAlumno").value;
-  const dni = parseInt(dniValue);
 
-  if (!dniValue || isNaN(dni)) {
-    mostrarAlerta("Por favor ingrese un DNI válido", "warning");
+  
+
+  // Limpiar clases de validación previas
+  document.getElementById("dniAlumno").classList.remove("is-invalid");
+
+   const dniValue = document.getElementById("dniAlumno").value.trim();
+  // Validar que el DNI no esté vacío
+  if (!dniValue) {
+    mostrarAlerta("Por favor ingrese un DNI", "warning");
+    document.getElementById("dniAlumno").focus();
+    return;
+  }
+
+  // Validar que tenga exactamente 8 dígitos PRIMERO
+  if (dniValue.length !== 8) {
+    mostrarAlerta("El DNI debe tener exactamente 8 dígitos", "warning");
+    document.getElementById("dniAlumno").classList.add("is-invalid");
+    document.getElementById("dniAlumno").focus();
+    return;
+  }
+
+  // Validar que sea un número válido
+  const dni = parseInt(dniValue);
+  if (isNaN(dni) || !/^\d{8}$/.test(dniValue)) {
+    mostrarAlerta("El DNI debe contener solo números", "warning");
+    document.getElementById("dniAlumno").classList.add("is-invalid");
+    document.getElementById("dniAlumno").focus();
     return;
   }
 
@@ -408,6 +456,31 @@ async function guardarAlumno() {
     mostrarAlerta("Por favor complete todos los campos obligatorios", "warning");
     return;
   }
+
+  // ⭐ VALIDACIÓN DE DNI DUPLICADO ⭐
+  if (!id) {
+    // Solo validar duplicados al crear nuevo alumno
+    console.log("Verificando DNI duplicado:", dni);
+    console.log("Alumnos existentes:", todosLosAlumnos);
+    
+    const alumnoExistente = todosLosAlumnos.find(
+      (a) => parseInt(a.dniAlumno) === parseInt(dni)
+    );
+    
+    if (alumnoExistente) {
+      console.log("DNI duplicado encontrado:", alumnoExistente);
+      mostrarAlerta(
+        `Ya existe un alumno registrado con el DNI ${dniValue}`,
+        "danger"
+      );
+    
+      document.getElementById("dniAlumno").focus();
+      
+      return;
+    }
+    console.log("DNI válido, no hay duplicados");
+  }
+  // ⭐ FIN DE LA VALIDACIÓN ⭐
 
   const alumno = {
     IdAlumno: id ? parseInt(id) : 0,
@@ -443,7 +516,7 @@ async function guardarAlumno() {
       return;
     }
 
-    const mensaje = id ? "Alumno actualizado exitosamente" : "Alumno creado exitosamente";
+    const mensaje = id ? "✓ Alumno actualizado exitosamente" : `✓ Alumno creado exitosamente (DNI: ${dniValue})`;
     mostrarAlerta(mensaje, "success");
 
     modalAlumno?.hide();
@@ -488,7 +561,7 @@ async function eliminarAlumno(dni) {
       return;
     }
 
-    mostrarAlerta("Alumno marcado como inactivo exitosamente", "success");
+    mostrarAlerta("✓ Alumno marcado como inactivo exitosamente", "success");
     await cargarAlumnos();
 
   } catch (error) {
@@ -530,7 +603,7 @@ async function activarAlumno(dni) {
       return;
     }
 
-    mostrarAlerta("Alumno activado exitosamente", "success");
+    mostrarAlerta("✓ Alumno activado exitosamente", "success");
     await cargarAlumnos();
 
   } catch (error) {
@@ -543,7 +616,29 @@ async function activarAlumno(dni) {
 // MOSTRAR ALERTAS
 // ---------------------------------------------------------
 function mostrarAlerta(mensaje, tipo = 'success') {
-  const alertDiv = document.getElementById('alertContainer');
+  // Si el modal está abierto, mostrar alerta dentro del modal
+  const modalElement = document.getElementById('modalAlumno');
+  const modalIsOpen = modalElement && modalElement.classList.contains('show');
+  
+  let alertDiv;
+  
+  if (modalIsOpen) {
+    // Buscar o crear contenedor de alertas dentro del modal
+    alertDiv = document.getElementById('alertContainerModal');
+    if (!alertDiv) {
+      const modalBody = document.querySelector('#modalAlumno .modal-body');
+      if (modalBody) {
+        alertDiv = document.createElement('div');
+        alertDiv.id = 'alertContainerModal';
+        alertDiv.style.marginBottom = '1rem';
+        modalBody.insertBefore(alertDiv, modalBody.firstChild);
+      }
+    }
+  } else {
+    // Usar contenedor de alertas principal
+    alertDiv = document.getElementById('alertContainer');
+  }
+  
   if (alertDiv) {
     alertDiv.innerHTML = `
       <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
@@ -555,7 +650,7 @@ function mostrarAlerta(mensaje, tipo = 'success') {
 
     setTimeout(() => {
       alertDiv.innerHTML = '';
-    }, 3000);
+    }, 5000);
   } else {
     console.log(`${tipo.toUpperCase()}: ${mensaje}`);
   }
