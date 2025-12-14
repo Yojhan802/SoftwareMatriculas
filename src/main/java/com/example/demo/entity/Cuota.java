@@ -3,6 +3,8 @@ package com.example.demo.entity;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,6 +28,7 @@ public class Cuota {
 
     @ManyToOne
     @JoinColumn(name = "id_matricula", nullable = false)
+    @JsonIgnoreProperties({"alumno", "cuotas", "matricula"})
     private Matricula matricula;
 
     @Column(name = "descripcion", length = 100, nullable = true)

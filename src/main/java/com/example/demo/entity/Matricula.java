@@ -3,6 +3,7 @@ package com.example.demo.entity;
 import java.util.Date;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,6 +33,7 @@ public class Matricula {
 
     //Relacion con Cuota
     @OneToMany(mappedBy = "matricula", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Cuota> cuotas;
 
     @Column(name = "Fecha_Matricula")

@@ -102,10 +102,14 @@ async function buscarDeudas() {
             return;
         }
 
-        const res = await fetch(`${API_GESTION_PAGOS}/pendientes?termino=${termino}`);
-        
+        // AGREGADO: { credentials: 'include' }
+        const res = await fetch(`${API_GESTION_PAGOS}/pendientes?termino=${termino}`, {
+            method: 'GET',        // Es buena práctica poner el método
+            credentials: 'include' // <--- ESTO ES LO QUE TE FALTA
+        });
+
         if(!res.ok) throw new Error("Error en la petición al servidor");
-        
+
         cuotasActuales = await res.json();
         renderizarTablaCuotas();
 
@@ -128,15 +132,15 @@ function renderizarTablaCuotas() {
 
     cuotasActuales.forEach((c, index) => {
         let checkboxHTML = '';
-        
+
         if(c.estado === 'PAGADO') {
             checkboxHTML = '<span style="color:green; font-size:1.2em;">✅</span>';
         } else {
             // Checkbox con data-attributes para cálculos
-            checkboxHTML = `<input type="checkbox" class="chk-pago" 
-                            data-index="${index}" 
-                            data-id="${c.idCuota}" 
-                            data-monto="${c.monto}"
+            checkboxHTML = `<input type="checkbox" class="chk-pago"
+                            data-index="${index}"
+
+                            data-id="${c.idCuota}"  data-monto="${c.monto}"
                             onchange="calcularTotalYValidacion()">`;
         }
 
@@ -199,44 +203,53 @@ function calcularTotalYValidacion() {
 // ÁREA A: PROCESAR PAGO
 // ---------------------------------------------------------
 async function procesarPagoSeleccionado() {
+    // 1. Obtener checkboxes marcados
     const seleccionados = document.querySelectorAll('.chk-pago:checked');
+
     if(seleccionados.length === 0) {
-        alert("Selecciona al menos una cuota para pagar.");
+        alert("Selecciona al menos una cuota.");
         return;
     }
 
-    if(!confirm(`¿Estás seguro de pagar ${seleccionados.length} cuota(s)?`)) return;
+    if(!confirm(`¿Confirmar pago de ${seleccionados.length} cuotas?`)) return;
+
+    // 2. CONSTRUIR EL ARRAY (LISTA) []
+    const listaPagos = [];
+
+    seleccionados.forEach(chk => {
+        listaPagos.push({
+            idCuota: parseInt(chk.dataset.id),
+            montoPago: parseFloat(chk.dataset.monto),
+            metodoPago: "Efectivo" // O el valor de tu select
+        });
+    });
 
     try {
-        // Procesamos pago por pago (secuencialmente para evitar errores de concurrencia simple)
-        for (const chk of seleccionados) {
-            const idCuota = chk.dataset.id;
-            const monto = parseFloat(chk.dataset.monto);
-            
-            const payload = {
-                idCuota: idCuota,
-                montoPago: monto,
-                metodoPago: "Efectivo" // Aquí podrías leer un <select> del HTML
-            };
+        // 3. ENVIAR LA LISTA COMPLETA (Una sola petición)
+        const res = await fetch("/api/pagos/realizar", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(listaPagos) // debe ser array
+                          });
 
-            const res = await fetch(API_REALIZAR_PAGO, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            });
 
-            if(!res.ok) {
-                const errorTxt = await res.text();
-                throw new Error(`Error pagando cuota ID ${idCuota}: ${errorTxt}`);
-            }
+        if(!res.ok) {
+            // Aquí atrapamos el error del backend ("Debes pagar Marzo antes...")
+            const errorTxt = await res.text();
+            throw new Error(errorTxt);
         }
 
-        alert("¡Pagos procesados correctamente!");
-        buscarDeudas(); // Recargar la tabla para actualizar estados a PAGADO
+        const recibos = await res.json();
+        alert("✅ Pagos procesados correctamente. Se generaron " + recibos.length + " recibos.");
+
+        // Recargar la tabla
+        if(typeof buscarDeudas === 'function') {
+            buscarDeudas();
+        }
 
     } catch (error) {
-        console.error("Error procesando pago:", error);
-        alert("Ocurrió un error: " + error.message);
+        console.error(error);
+        alert("❌ Error: " + error.message);
     }
 }
 
@@ -251,8 +264,10 @@ async function buscarRecibo() {
             return;
         }
 
-        const res = await fetch(`${API_GESTION_PAGOS}/recibo/${nro}`);
-        
+        const res = await fetch(`${API_GESTION_PAGOS}/recibo/${nro}`, {
+                    credentials: 'include' // <--- AGREGAR AQUÍ
+                });
+
         if (!res.ok) {
             alert("Recibo no encontrado o error en servidor.");
             const divRes = document.getElementById('resultadoRecibo');
@@ -261,17 +276,17 @@ async function buscarRecibo() {
         }
 
         const data = await res.json();
-        
+
         // Mostrar resultados
         const divRes = document.getElementById('resultadoRecibo');
         if(divRes) divRes.style.display = 'block';
-        
+
         document.getElementById('lblRecibo').innerText = data.numeroRecibo;
         document.getElementById('lblAlumno').innerText = data.nombreAlumno;
         document.getElementById('lblMonto').innerText = "S/ " + (data.montoPagado?.toFixed(2) ?? "0.00");
 
         // Guardar el Nro en el botón de anular
-        const btnAnular = document.querySelector('#resultadoRecibo button.btn-danger-custom'); 
+        const btnAnular = document.querySelector('#resultadoRecibo button.btn-danger-custom');
         // Nota: Asegúrate que tu HTML tenga la clase btn-danger-custom o ajusta el selector aquí
         if(btnAnular) btnAnular.setAttribute('data-nro', data.numeroRecibo);
 
@@ -297,9 +312,10 @@ async function anularRecibo() {
     if(!confirm(`⚠️ ATENCIÓN: ¿Estás SEGURO de anular el recibo ${nro}?\n\nLa cuota volverá a estado 'DEBE' y el dinero se considerará devuelto.`)) return;
 
     try {
-        const res = await fetch(`${API_GESTION_PAGOS}/anular/${nro}`, {
-            method: 'POST'
-        });
+            const res = await fetch(`${API_GESTION_PAGOS}/anular/${nro}`, {
+                method: 'POST',
+                credentials: 'include' // <--- AGREGAR AQUÍ
+            });
 
         if (res.ok) {
             alert("✅ Recibo anulado correctamente.");

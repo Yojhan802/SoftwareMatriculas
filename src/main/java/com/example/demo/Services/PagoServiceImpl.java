@@ -1,7 +1,10 @@
 package com.example.demo.Services;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,109 +17,130 @@ import com.example.demo.entity.Recibo;
 import com.example.demo.repository.CuotaRepository;
 import com.example.demo.repository.ReciboRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor // Esto inyecta los repositorios automáticamente
 public class PagoServiceImpl implements PagoService {
 
-    private final CuotaRepository cuotaRepository;
-    private final ReciboRepository reciboRepository;
-
-    private static final String SERIE_RECIBO = "001";
-
-    public PagoServiceImpl(CuotaRepository cuotaRepository, ReciboRepository reciboRepository) {
-        this.cuotaRepository = cuotaRepository;
-        this.reciboRepository = reciboRepository;
-    }
+    private final CuotaRepository cuotaRepo;
+    private final ReciboRepository reciboRepo;
 
     @Override
-    @Transactional    public ReciboDetalleDTO procesarPago(PagoDTO pagoDTO) {
+    @Transactional(rollbackFor = Exception.class) // SI FALLA UNO, SE CANCELAN TODOS
+    public List<ReciboDetalleDTO> procesarPagos(List<PagoDTO> listaPagos) {
 
-        Cuota cuota = cuotaRepository.findById(pagoDTO.getIdCuota())
-                .orElseThrow(() -> new RuntimeException("Cuota no encontrada"));
+        List<ReciboDetalleDTO> recibosGenerados = new ArrayList<>();
 
-        if (cuota.getEstado() == EstadoCuota.PAGADO) {
-            throw new RuntimeException("Esta cuota ya ha sido pagada previamente.");
+        // 1. Ordenamos la lista entrante por ID de cuota.
+        // Esto asegura que procesemos Marzo antes que Abril dentro del bucle.
+        listaPagos.sort(Comparator.comparing(PagoDTO::getIdCuota));
+
+        for (PagoDTO pagoDto : listaPagos) {
+
+            // A. Buscar Cuota
+            Cuota cuota = cuotaRepo.findById(pagoDto.getIdCuota())
+                    .orElseThrow(() -> new RuntimeException("Cuota no encontrada ID: " + pagoDto.getIdCuota()));
+
+            // B. Validar si ya pagó
+            if (cuota.getEstado() == EstadoCuota.PAGADO) {
+                throw new RuntimeException("La cuota del mes " + cuota.getMes() + " ya figura como PAGADA.");
+            }
+
+            // C. VALIDACIÓN CRÍTICA: ¿Tiene deudas anteriores?
+            // Esta función busca si existe alguna cuota de esta misma matrícula,
+            // que esté en estado DEBE y cuya fecha sea ANTERIOR a la actual.
+            boolean deudaPendiente = cuotaRepo.existsByMatriculaAndEstadoAndFechaVencimientoBefore(
+                    cuota.getMatricula(),
+                    EstadoCuota.DEBE,
+                    cuota.getFechaVencimiento()
+            );
+
+            if (deudaPendiente) {
+                throw new RuntimeException("BLOQUEO: El alumno debe cuotas anteriores a " + cuota.getMes()
+                        + ". Debe regularizar su deuda en orden cronológico.");
+            }
+
+            // D. Validar monto exacto (Opcional, según tu regla de negocio)
+            // Usamos compareTo para BigDecimals
+            if (pagoDto.getMontoPago().compareTo(cuota.getMonto()) != 0) {
+                throw new RuntimeException("Error en " + cuota.getMes() + ": El monto enviado no coincide con la deuda.");
+            }
+
+            // E. Generar el Recibo
+            Recibo recibo = new Recibo();
+            recibo.setCuota(cuota);
+            recibo.setAlumno(cuota.getMatricula().getAlumno());
+            recibo.setNumeroRecibo(generarNumeroUnico()); // Método privado auxiliar
+            recibo.setFechaPago(LocalDateTime.now());
+            recibo.setMontoTotal(cuota.getMonto());
+            recibo.setMetodoPago(pagoDto.getMetodoPago());
+            recibo.setAnulado(false);
+
+            // F. Actualizar estado Cuota
+            cuota.setEstado(EstadoCuota.PAGADO);
+
+            // G. Guardar en BD
+            cuotaRepo.save(cuota);   // Actualiza a PAGADO inmediatamente
+            Recibo guardado = reciboRepo.save(recibo);
+
+            // H. Agregar a la lista de respuesta
+            recibosGenerados.add(mapToDTO(guardado));
         }
 
-        if (cuota.getMonto().compareTo(pagoDTO.getMontoPago()) != 0) {
-            throw new RuntimeException("El monto del pago no coincide con el monto de la cuota.");
-        }
-
-        cuota.setEstado(EstadoCuota.PAGADO);
-        cuotaRepository.save(cuota);
-
-        String nuevoNumeroRecibo = generarProximoNumeroRecibo();
-
-        Recibo recibo = new Recibo();
-        recibo.setCuota(cuota);
-        recibo.setAlumno(cuota.getMatricula().getAlumno());
-        recibo.setNumeroRecibo(nuevoNumeroRecibo);
-        recibo.setFechaPago(LocalDateTime.now());
-        recibo.setMontoTotal(pagoDTO.getMontoPago());
-        recibo.setMetodoPago(pagoDTO.getMetodoPago());
-        recibo.setAnulado(false); //nace no anulado
-
-        Recibo reciboGuardado = reciboRepository.save(recibo);
-
-        return mapToDTO(reciboGuardado);
+        return recibosGenerados;
     }
 
     @Override
     public ReciboDetalleDTO buscarReciboPorNumero(String numeroRecibo) {
-        Recibo recibo = reciboRepository.findByNumeroRecibo(numeroRecibo)
-                .orElseThrow(() -> new RuntimeException("Recibo no encontrado con el número: " + numeroRecibo));
-
-        return mapToDTO(recibo);
+        Recibo r = reciboRepo.findByNumeroRecibo(numeroRecibo)
+                .orElseThrow(() -> new RuntimeException("Recibo no encontrado"));
+        return mapToDTO(r);
     }
 
     @Override
-    @Transactional    public void anularRecibo(String numeroRecibo) {
-        // 1. Buscar el recibo
-        Recibo recibo = reciboRepository.findByNumeroRecibo(numeroRecibo)
+    @Transactional
+    public void anularRecibo(String numeroRecibo) {
+        Recibo recibo = reciboRepo.findByNumeroRecibo(numeroRecibo)
                 .orElseThrow(() -> new RuntimeException("Recibo no encontrado"));
 
-        // 2. Validar que no esté ya anulado
         if (recibo.isAnulado()) {
-            throw new RuntimeException("Este recibo ya se encuentra anulado.");
+            throw new RuntimeException("El recibo ya está anulado.");
         }
 
-        // 3. Recuperar la cuota asociada
-        Cuota cuota = recibo.getCuota();
+        // Para anular, también debemos verificar que no se anule Marzo si Abril está pagado
+        // (La lógica inversa: no dejar huecos).
+        // Verificar si existe una cuota POSTERIOR pagada.
+        boolean pagosPosteriores = cuotaRepo.existsByMatriculaAndEstadoAndFechaVencimientoAfter(
+                recibo.getCuota().getMatricula(),
+                EstadoCuota.PAGADO,
+                recibo.getCuota().getFechaVencimiento()
+        );
 
-        // 4. Revertir el estado de la cuota a DEBE (para que se pueda volver a cobrar)
-        cuota.setEstado(EstadoCuota.DEBE);
-        cuotaRepository.save(cuota);
+        if (pagosPosteriores) {
+            throw new RuntimeException("No se puede anular este recibo porque existen cuotas posteriores ya pagadas. Anule esas primero.");
+        }
 
-        // 5. Marcar recibo como anulado
         recibo.setAnulado(true);
-        reciboRepository.save(recibo);
+        recibo.getCuota().setEstado(EstadoCuota.DEBE); // La cuota vuelve a deberse
+
+        reciboRepo.save(recibo);
+        cuotaRepo.save(recibo.getCuota());
     }
 
-    private String generarProximoNumeroRecibo() {
-        Optional<Recibo> ultimoRecibo = reciboRepository.findTopByOrderByIdReciboDesc();
-
-        if (ultimoRecibo.isPresent()) {
-            String ultimoNumero = ultimoRecibo.get().getNumeroRecibo();
-            String[] partes = ultimoNumero.split("-");
-            long correlativoActual = Long.parseLong(partes[1]);
-            long nuevoCorrelativo = correlativoActual + 1;
-
-            return String.format("%s-%07d", SERIE_RECIBO, nuevoCorrelativo);
-        } else {
-            return SERIE_RECIBO + "-0000001";
-        }
+    // --- MÉTODOS PRIVADOS ---
+    private String generarNumeroUnico() {
+        // Aquí tu lógica de correlativo. Ejemplo simple:
+        return "REC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    private ReciboDetalleDTO mapToDTO(Recibo recibo) {
+    private ReciboDetalleDTO mapToDTO(Recibo r) {
         ReciboDetalleDTO dto = new ReciboDetalleDTO();
-        dto.setNumeroRecibo(recibo.getNumeroRecibo());
-        dto.setFechaPago(recibo.getFechaPago());
-        dto.setMontoPagado(recibo.getMontoTotal());
-
-        // descifrar la logica de cifrado del alumno
-        dto.setNombreAlumno(recibo.getAlumno().getNombre() + " " + recibo.getAlumno().getApellido());
-
-        dto.setConcepto(recibo.getCuota().getDescripcion());
-
+        dto.setNumeroRecibo(r.getNumeroRecibo());
+        dto.setFechaPago(r.getFechaPago());
+        dto.setMontoPagado(r.getMontoTotal());
+        dto.setNombreAlumno(r.getAlumno().getNombre() + " " + r.getAlumno().getApellido());
+        dto.setConcepto("Cuota " + r.getCuota().getMes());
         return dto;
     }
 }
