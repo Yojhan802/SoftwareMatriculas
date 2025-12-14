@@ -29,7 +29,7 @@ public class MatriculaController {
     // 1. CREAR MATRICULA (POST)
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<MatriculaDTO> crear(@RequestBody Matricula matricula) {
+    public ResponseEntity<MatriculaDTO> crear(@RequestBody MatriculaDTO matricula) {
         MatriculaDTO nuevaMatricula = service.crearMatricula(matricula);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevaMatricula);
     }

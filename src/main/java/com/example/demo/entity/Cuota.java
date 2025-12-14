@@ -22,24 +22,29 @@ public class Cuota {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer idCuota;
+    private Integer id_Cuota;
 
     @ManyToOne
     @JoinColumn(name = "id_matricula", nullable = false)
     private Matricula matricula;
 
-    @Column(name = "descripcion", length = 100)
+    @Column(name = "descripcion", length = 100, nullable = true)
     private String descripcion;
 
-    @Column(name = "monto", nullable = false, precision = 10, scale = 2)
+    @Column(name = "monto", nullable = false)
     private BigDecimal monto;
 
-    @Column(name = "fecha_vencimiento")
+    @Column(name = "fecha_vencimiento", nullable = false)
     private LocalDate fechaVencimiento;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false)
     private EstadoCuota estado = EstadoCuota.DEBE;
 
-    // Concepto y recibo
+    @Column(name = "mes", nullable = false, length = 20)
+    private String mes;
+
+    @Column(name = "anio", nullable = false, length = 10)
+    private String anio;
+
 }

@@ -11,4 +11,9 @@ public class MatriculaDTO {
     private int id_alumno;
     private Date fecha_Matricula;
     private String Periodo;
+    private String nivel;
+    private String grado;
+    private double monto_Matricula;
+    private String estado;
+
 }

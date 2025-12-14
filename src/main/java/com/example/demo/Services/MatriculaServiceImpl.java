@@ -1,5 +1,7 @@
 package com.example.demo.Services;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -7,8 +9,10 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.dto.MatriculaDTO;
 import com.example.demo.entity.Alumno;
+import com.example.demo.entity.Cuota;
 import com.example.demo.entity.Matricula;
 import com.example.demo.repository.AlumnoRepository;
+import com.example.demo.repository.CuotaRepository;
 import com.example.demo.repository.MatriculaRepository;
 
 @Service
@@ -16,10 +20,12 @@ public class MatriculaServiceImpl implements MatriculaService {
 
     private final MatriculaRepository matriculaRepository;
     private final AlumnoRepository alumnoRepo;
+    private final CuotaRepository repoCuota;
 
-    public MatriculaServiceImpl(MatriculaRepository matriculaRepository, AlumnoRepository alumnoRepo) {
-        this.matriculaRepository = matriculaRepository;
+    public MatriculaServiceImpl(AlumnoRepository alumnoRepo, MatriculaRepository matriculaRepository, CuotaRepository repoCuota) {
         this.alumnoRepo = alumnoRepo;
+        this.matriculaRepository = matriculaRepository;
+        this.repoCuota = repoCuota;
     }
 
     private MatriculaDTO mapToDTO(Matricula matricula) {
@@ -28,6 +34,8 @@ public class MatriculaServiceImpl implements MatriculaService {
         m.setId_alumno(matricula.getAlumno().getId_Alumno());
         m.setFecha_Matricula(matricula.getFecha_Matricula());
         m.setPeriodo(matricula.getPeriodo());
+        m.setEstado(matricula.getEstado());
+        m.setGrado(matricula.getEstado());
 
         return m;
     }
@@ -42,12 +50,30 @@ public class MatriculaServiceImpl implements MatriculaService {
     }
 
     @Override
-    public MatriculaDTO crearMatricula(Matricula matricula) {
-        Alumno alu = alumnoRepo.findById(matricula.getAlumno().getId_Alumno())
+    public MatriculaDTO crearMatricula(MatriculaDTO matricula) {
+        Alumno alu = alumnoRepo.findById(matricula.getId_alumno())
                 .orElseThrow(() -> new RuntimeException("Almuno no encontrado"));
-        matricula.setAlumno(alu);
 
-        Matricula m = matriculaRepository.save(matricula);
+        Matricula ma = new Matricula();
+        ma.setAlumno(alu);
+        ma.setPeriodo(matricula.getPeriodo());
+        ma.setFecha_Matricula(matricula.getFecha_Matricula());
+        ma.setGrado(matricula.getGrado());
+        ma.setNivel(matricula.getNivel());
+        Matricula m = matriculaRepository.save(ma);
+        LocalDate fecha = LocalDate.now();
+        for (int i = 3; i <= 10; i++) {
+            Cuota c = new Cuota();
+            c.setMatricula(m);
+            c.setAnio(matricula.getPeriodo());
+            c.setMes(String.valueOf(i));
+
+            LocalDate fechaMas30 = fecha.plusDays(30);
+            fecha = fecha.plusDays(30);
+            c.setFechaVencimiento(fechaMas30);
+            c.setMonto((BigDecimal.valueOf(350.00)));
+            repoCuota.save(c);
+        }
 
         return mapToDTO(m);
     }

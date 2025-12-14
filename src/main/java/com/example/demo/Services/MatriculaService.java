@@ -7,7 +7,7 @@ import com.example.demo.entity.Matricula;
 
 public interface MatriculaService {
 
-    MatriculaDTO crearMatricula(Matricula matricula);
+    MatriculaDTO crearMatricula(MatriculaDTO matricula);
 
     MatriculaDTO ObtenerMatricula(int id);
 

@@ -51,28 +51,31 @@
       <h4>Paso 2: Datos de la Matrícula</h4>
 
       <div class="row g-3 mb-4">
-        <div class="col-md-6">
-          <label for="anio-escolar" class="form-label"
-            >Año Escolar (Periodo)</label
-          >
+        <div class="col-md-4">
+          <label for="anio-escolar" class="form-label">Año Escolar</label>
           <select id="anio-escolar" class="form-select">
             <option value="2025" selected>2025</option>
             <option value="2026">2026</option>
           </select>
         </div>
-        <div class="col-md-6">
-          <label for="grado-select" class="form-label">Grado</label>
-          <select id="grado-select" class="form-select">
-            <option value="" disabled selected>Seleccione un Grado</option>
-            <option value="Primer Grado">Primer Grado</option>
-            <option value="Segundo Grado">Segundo Grado</option>
-            <option value="Tercer Grado">Tercer Grado</option>
-            <option value="Cuarto Grado">Cuarto Grado</option>
-            <option value="Quinto Grado">Quinto Grado</option>
+
+        <div class="col-md-4">
+          <label for="nivel-select" class="form-label">Nivel</label>
+          <select id="nivel-select" class="form-select">
+            <option value="" disabled selected>Seleccione Nivel</option>
+            <option value="Primaria">Primaria</option>
+            <option value="Secundaria">Secundaria</option>
           </select>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-4">
+          <label for="grado-select" class="form-label">Grado</label>
+          <select id="grado-select" class="form-select" disabled>
+            <option value="" disabled selected>Seleccione Nivel primero</option>
+          </select>
+        </div>
+
+        <div class="col-md-12">
           <label for="fecha-matricula" class="form-label"
             >Fecha de Matrícula</label
           >
@@ -102,8 +105,11 @@
 
       <div class="alert alert-light border">
         <strong>Resumen:</strong> Matrícula para el alumno
-        <span id="resumen-nombre-alumno" class="fw-bold"></span> en el grado
-        <span id="resumen-grado" class="fw-bold"></span>.
+        <span id="resumen-nombre-alumno" class="fw-bold"></span>
+        <br />
+        <strong>Nivel:</strong>
+        <span id="resumen-nivel" class="fw-bold"></span> |
+        <strong>Grado:</strong> <span id="resumen-grado" class="fw-bold"></span>
       </div>
 
       <div class="table-responsive mb-4">
