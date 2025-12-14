@@ -44,6 +44,20 @@ function initMatriculas() {
 
     asignarEvento('btn-atras-paso3', 'click', goToStep2);
     asignarEvento('btn-confirmar-matricula', 'click', confirmarMatricula);
+
+    // --- NUEVO: VALIDACIÓN DE INPUT DNI EN TIEMPO REAL ---
+    const dniInput = document.getElementById('alumno-search-input');
+    if (dniInput) {
+        dniInput.addEventListener('input', function() {
+            // 1. Reemplazar cualquier caracter que NO sea número (0-9) por vacío
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // 2. Si la longitud es mayor a 8, cortar el string
+            if (this.value.length > 8) {
+                this.value = this.value.slice(0, 8);
+            }
+        });
+    }
 }
 
 function asignarEvento(id, evento, funcion) {

@@ -21,6 +21,7 @@ import com.example.demo.entity.Matricula;
 
 @RestController
 @RequestMapping("/api/matricula")
+    
 public class MatriculaController {
 
     @Autowired
@@ -55,8 +56,13 @@ public class MatriculaController {
 
     // 5. ELIMINAR MATRICULA (DELETE)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable int id) {
-        service.eliminarMatricula(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> eliminar(@PathVariable int id) {
+        try {
+            service.eliminarMatricula(id);
+            return ResponseEntity.noContent().build(); // Retorna 204 (Éxito sin contenido)
+        } catch (Exception e) {
+            // Esto capturará errores, por ejemplo, si hay recibos de pago vinculados
+            return ResponseEntity.badRequest().body("No se puede eliminar: " + e.getMessage());
+        }
     }
 }

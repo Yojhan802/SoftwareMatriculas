@@ -30,12 +30,23 @@ public class MatriculaServiceImpl implements MatriculaService {
 
     private MatriculaDTO mapToDTO(Matricula matricula) {
         MatriculaDTO m = new MatriculaDTO();
+        
+        // ID y Relaciones
         m.setId_Matricula(matricula.getId_Matricula());
-        m.setId_alumno(matricula.getAlumno().getId_Alumno());
+        
+        // Validación segura por si el alumno viene nulo (aunque no debería)
+        if (matricula.getAlumno() != null) {
+            m.setId_alumno(matricula.getAlumno().getId_Alumno());
+        }
+
         m.setFecha_Matricula(matricula.getFecha_Matricula());
-        m.setPeriodo(matricula.getPeriodo());
+        m.setPeriodo(matricula.getPeriodo()); // Asegúrate de que este dato exista en BD
         m.setEstado(matricula.getEstado());
-        m.setGrado(matricula.getEstado());
+
+        // --- CORRECCIONES ---
+        m.setNivel(matricula.getNivel());      // Faltaba mapear el Nivel
+        m.setGrado(matricula.getGrado());      // Corregido: antes usabas getEstado()
+        m.setMonto_Matricula(matricula.getMonto_Matricula()); // Faltaba mapear el Monto
 
         return m;
     }
