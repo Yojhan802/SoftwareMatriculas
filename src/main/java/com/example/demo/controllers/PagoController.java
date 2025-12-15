@@ -4,7 +4,12 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.Services.PagoService;
 import com.example.demo.dto.PagoDTO;
@@ -27,9 +32,9 @@ public class PagoController {
     // ==========================================
     // RUTAS DE GESTIÓN
     // ==========================================
-    @GetMapping("/api/gestion-pagos/pendientes")
-    public ResponseEntity<List<Cuota>> buscarDeudas(@RequestParam String termino) {
-        List<Cuota> cuotas = cuotaRepo.buscarPorAlumno(termino);
+    @GetMapping("/api/gestion-pagos/pendientes/{dni}")
+    public ResponseEntity<List<Cuota>> buscarDeudas(@PathVariable String dni) {
+        List<Cuota> cuotas = cuotaRepo.buscarPorAlumno(dni);
         return ResponseEntity.ok(cuotas);
     }
 

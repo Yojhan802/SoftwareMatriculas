@@ -1,6 +1,4 @@
-// ========== VARIABLES GLOBALES ==========
-// Define la variable para que gestionPagos.js la pueda leer
-window.modoVistaPagos = "PAGAR"; 
+
 
 // ========== FUNCIÓN ORIGINAL loadView ==========
 function loadViewOriginal(view) {
@@ -49,20 +47,6 @@ function loadViewOriginal(view) {
       if (loadingIndicator) loadingIndicator.style.display = "none";
     });
 }
-
-// ========== NUEVA FUNCIÓN PUENTE PARA PAGOS ==========
-// Esta es la función que te faltaba para que funcionen los botones del menú
-function cargarVistaPagos(modo) {
-    // 1. Guardamos el modo en la variable global (PAGAR o ANULAR)
-    window.modoVistaPagos = modo;
-    
-    // 2. Cargamos el HTML. 
-    // IMPORTANTE: Asegúrate de que esta ruta sea la correcta en tu carpeta.
-    // He asumido que está en la carpeta 'Pagos', igual que 'Alumnos/alumnos.html'
-    loadViewOriginal('Pagos/gestionPagos.html'); 
-}
-// Hacemos la función accesible globalmente para el HTML
-window.cargarVistaPagos = cargarVistaPagos;
 
 
 // =====================================================

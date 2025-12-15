@@ -31,6 +31,9 @@ public class Recibo {
     @JoinColumn(name = "id_alumno", nullable = false)
     private Alumno alumno;
 
+    @Column(length = 3, nullable = false)
+    private String serie;
+
     @Column(name = "numero_recibo", nullable = false, unique = true, length = 20)
     private String numeroRecibo;
 

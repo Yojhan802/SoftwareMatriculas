@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,7 +70,8 @@ public class PagoServiceImpl implements PagoService {
             Recibo recibo = new Recibo();
             recibo.setCuota(cuota);
             recibo.setAlumno(cuota.getMatricula().getAlumno());
-            recibo.setNumeroRecibo(generarNumeroUnico()); // Método privado auxiliar
+            recibo.setSerie("001");
+            recibo.setNumeroRecibo(generarCodigoRecibo(recibo.getSerie())); // Método privado auxiliar
             recibo.setFechaPago(LocalDateTime.now());
             recibo.setMontoTotal(cuota.getMonto());
             recibo.setMetodoPago(pagoDto.getMetodoPago());
@@ -129,9 +129,14 @@ public class PagoServiceImpl implements PagoService {
     }
 
     // --- MÉTODOS PRIVADOS ---
-    private String generarNumeroUnico() {
-        // Aquí tu lógica de correlativo. Ejemplo simple:
-        return "REC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    private String generarCodigoRecibo(String serie) {
+
+        Integer ultimo = reciboRepo.obtenerUltimoNumero(serie);
+        int siguiente = (ultimo == null) ? 1 : ultimo + 1;
+
+        String numeroFormateado = String.format("%07d", siguiente);
+
+        return serie + "-" + numeroFormateado;
     }
 
     private ReciboDetalleDTO mapToDTO(Recibo r) {

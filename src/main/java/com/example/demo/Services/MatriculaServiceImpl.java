@@ -2,11 +2,13 @@ package com.example.demo.Services;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.AlumnoDTO;
 import com.example.demo.dto.MatriculaDTO;
 import com.example.demo.entity.Alumno;
 import com.example.demo.entity.Cuota;
@@ -21,8 +23,10 @@ public class MatriculaServiceImpl implements MatriculaService {
     private final MatriculaRepository matriculaRepository;
     private final AlumnoRepository alumnoRepo;
     private final CuotaRepository repoCuota;
+    private final AlumnoServiceImpl a;
 
-    public MatriculaServiceImpl(AlumnoRepository alumnoRepo, MatriculaRepository matriculaRepository, CuotaRepository repoCuota) {
+    public MatriculaServiceImpl(AlumnoServiceImpl a, AlumnoRepository alumnoRepo, MatriculaRepository matriculaRepository, CuotaRepository repoCuota) {
+        this.a = a;
         this.alumnoRepo = alumnoRepo;
         this.matriculaRepository = matriculaRepository;
         this.repoCuota = repoCuota;
@@ -30,10 +34,10 @@ public class MatriculaServiceImpl implements MatriculaService {
 
     private MatriculaDTO mapToDTO(Matricula matricula) {
         MatriculaDTO m = new MatriculaDTO();
-        
+
         // ID y Relaciones
         m.setId_Matricula(matricula.getId_Matricula());
-        
+
         // Validación segura por si el alumno viene nulo (aunque no debería)
         if (matricula.getAlumno() != null) {
             m.setId_alumno(matricula.getAlumno().getId_Alumno());
@@ -72,18 +76,50 @@ public class MatriculaServiceImpl implements MatriculaService {
         ma.setGrado(matricula.getGrado());
         ma.setNivel(matricula.getNivel());
         Matricula m = matriculaRepository.save(ma);
-        LocalDate fecha = LocalDate.now();
-        for (int i = 3; i <= 10; i++) {
+        LocalDate hoy = LocalDate.now();
+
+        int yearInicio = hoy.getMonthValue() <= 3
+                ? hoy.getYear()
+                : hoy.getYear() + 1;
+
+        // Fin de marzo del año correspondiente
+        YearMonth marzo = YearMonth.of(yearInicio, 3);
+        LocalDate fechaBase = marzo.atEndOfMonth();
+
+        LocalDate fecha = fechaBase;
+        int cont = 1;
+
+        //GENERAR CUOTA DE MATRICULA
+        Cuota cm = new Cuota();
+        cm.setMatricula(m);
+        cm.setDescripcion("Cuota de Matricula");
+        cm.setAnio(matricula.getPeriodo());
+        cm.setMes("-");
+
+        YearMonth ymm = YearMonth.of(yearInicio, 3);
+        LocalDate fechaVencimientom = ymm.atEndOfMonth();
+
+        cm.setFechaVencimiento(fechaVencimientom);
+        cm.setMonto((BigDecimal.valueOf(150.00)));
+        repoCuota.save(cm);
+
+        //GENERAR CUOTAS TOTALES DEL AÑO
+        AlumnoDTO alum = a.ObtenerAlumnoPorDni(alu.getDniAlumno());
+        for (int i = 3; i <= 12; i++) {
+
             Cuota c = new Cuota();
             c.setMatricula(m);
+            c.setDescripcion("Cuota N° " + cont + " de " + alum.getApellido());
             c.setAnio(matricula.getPeriodo());
             c.setMes(String.valueOf(i));
 
-            LocalDate fechaMas30 = fecha.plusDays(30);
-            fecha = fecha.plusDays(30);
-            c.setFechaVencimiento(fechaMas30);
+            YearMonth ym = YearMonth.of(yearInicio, i);
+            LocalDate fechaVencimiento = ym.atEndOfMonth();
+
+            c.setFechaVencimiento(fechaVencimiento);
             c.setMonto((BigDecimal.valueOf(350.00)));
             repoCuota.save(c);
+            cont++;
         }
 
         return mapToDTO(m);
