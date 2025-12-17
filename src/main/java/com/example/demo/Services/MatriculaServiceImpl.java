@@ -32,25 +32,44 @@ public class MatriculaServiceImpl implements MatriculaService {
         this.repoCuota = repoCuota;
     }
 
+    // =========================================================================
+    // MÉTODO MODIFICADO PARA DECIFRAR NOMBRES
+    // =========================================================================
     private MatriculaDTO mapToDTO(Matricula matricula) {
         MatriculaDTO m = new MatriculaDTO();
 
-        // ID y Relaciones
         m.setId_Matricula(matricula.getId_Matricula());
+        m.setFecha_Matricula(matricula.getFecha_Matricula());
+        m.setPeriodo(matricula.getPeriodo());
+        m.setEstado(matricula.getEstado());
+        m.setNivel(matricula.getNivel());
+        m.setGrado(matricula.getGrado());
+        m.setMonto_Matricula(matricula.getMonto_Matricula());
 
-        // Validación segura por si el alumno viene nulo (aunque no debería)
         if (matricula.getAlumno() != null) {
             m.setId_alumno(matricula.getAlumno().getId_Alumno());
+            
+            // --- AQUÍ ESTÁ EL CAMBIO ---
+            try {
+                // Obtenemos el texto cifrado de la BD
+                String nombreCifrado = matricula.getAlumno().getNombre();
+                String apellidoCifrado = matricula.getAlumno().getApellido();
+
+                // Usamos el método estático de AlumnoServiceImpl para decifrarlo
+                // La clave debe ser EXACTAMENTE la misma que usaste al guardar: "ClaveSecreta"
+                String nombrePlano = AlumnoServiceImpl.decifrar(nombreCifrado, "ClaveSecreta");
+                String apellidoPlano = AlumnoServiceImpl.decifrar(apellidoCifrado, "ClaveSecreta");
+
+                m.setNombreAlumno(nombrePlano);
+                m.setApellidoAlumno(apellidoPlano);
+            } catch (Exception e) {
+                // Si falla el descifrado (ej. datos antiguos no cifrados), mostramos el original o error
+                System.err.println("Error al decifrar alumno ID " + matricula.getAlumno().getId_Alumno() + ": " + e.getMessage());
+                m.setNombreAlumno(matricula.getAlumno().getNombre()); 
+                m.setApellidoAlumno(matricula.getAlumno().getApellido());
+            }
+            // ---------------------------
         }
-
-        m.setFecha_Matricula(matricula.getFecha_Matricula());
-        m.setPeriodo(matricula.getPeriodo()); // Asegúrate de que este dato exista en BD
-        m.setEstado(matricula.getEstado());
-
-        // --- CORRECCIONES ---
-        m.setNivel(matricula.getNivel());      // Faltaba mapear el Nivel
-        m.setGrado(matricula.getGrado());      // Corregido: antes usabas getEstado()
-        m.setMonto_Matricula(matricula.getMonto_Matricula()); // Faltaba mapear el Monto
 
         return m;
     }
@@ -60,14 +79,13 @@ public class MatriculaServiceImpl implements MatriculaService {
         matricula.setId_Matricula(matriculaDTO.getId_Matricula());
         matricula.setFecha_Matricula(matriculaDTO.getFecha_Matricula());
         matricula.setPeriodo(matriculaDTO.getPeriodo());
-
         return matricula;
     }
 
     @Override
     public MatriculaDTO crearMatricula(MatriculaDTO matricula) {
         Alumno alu = alumnoRepo.findById(matricula.getId_alumno())
-                .orElseThrow(() -> new RuntimeException("Almuno no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
         Matricula ma = new Matricula();
         ma.setAlumno(alu);
@@ -75,48 +93,43 @@ public class MatriculaServiceImpl implements MatriculaService {
         ma.setFecha_Matricula(matricula.getFecha_Matricula());
         ma.setGrado(matricula.getGrado());
         ma.setNivel(matricula.getNivel());
+        
+        // Asignamos monto por defecto si viene 0 (opcional, buena práctica)
+        if(matricula.getMonto_Matricula() == 0) ma.setMonto_Matricula(150.00);
+        else ma.setMonto_Matricula(matricula.getMonto_Matricula());
+        
+        // Establecer estado por defecto
+        if(ma.getEstado() == null) ma.setEstado("ACTIVO");
+
         Matricula m = matriculaRepository.save(ma);
+        
+        // --- LOGICA DE CUOTAS (Se mantiene igual) ---
         LocalDate hoy = LocalDate.now();
-
-        int yearInicio = hoy.getMonthValue() <= 3
-                ? hoy.getYear()
-                : hoy.getYear() + 1;
-
-        // Fin de marzo del año correspondiente
+        int yearInicio = hoy.getMonthValue() <= 3 ? hoy.getYear() : hoy.getYear() + 1;
         YearMonth marzo = YearMonth.of(yearInicio, 3);
-        LocalDate fechaBase = marzo.atEndOfMonth();
-
-        LocalDate fecha = fechaBase;
         int cont = 1;
 
-        //GENERAR CUOTA DE MATRICULA
+        // Cuota Matricula
         Cuota cm = new Cuota();
         cm.setMatricula(m);
         cm.setDescripcion("Cuota de Matricula");
         cm.setAnio(matricula.getPeriodo());
         cm.setMes("-");
-
-        YearMonth ymm = YearMonth.of(yearInicio, 3);
-        LocalDate fechaVencimientom = ymm.atEndOfMonth();
-
-        cm.setFechaVencimiento(fechaVencimientom);
+        cm.setFechaVencimiento(marzo.atEndOfMonth());
         cm.setMonto((BigDecimal.valueOf(150.00)));
         repoCuota.save(cm);
 
-        //GENERAR CUOTAS TOTALES DEL AÑO
-        AlumnoDTO alum = a.ObtenerAlumnoPorDni(alu.getDniAlumno());
+        // Cuotas Mensuales
+        AlumnoDTO alum = a.ObtenerAlumnoPorDni(alu.getDniAlumno()); // Esto ya devuelve el nombre decifrado
         for (int i = 3; i <= 12; i++) {
-
             Cuota c = new Cuota();
             c.setMatricula(m);
+            // Aquí 'alum' ya viene decifrado porque usas a.ObtenerAlumnoPorDni
             c.setDescripcion("Cuota N° " + cont + " de " + alum.getApellido());
             c.setAnio(matricula.getPeriodo());
             c.setMes(String.valueOf(i));
-
             YearMonth ym = YearMonth.of(yearInicio, i);
-            LocalDate fechaVencimiento = ym.atEndOfMonth();
-
-            c.setFechaVencimiento(fechaVencimiento);
+            c.setFechaVencimiento(ym.atEndOfMonth());
             c.setMonto((BigDecimal.valueOf(350.00)));
             repoCuota.save(c);
             cont++;
@@ -127,25 +140,25 @@ public class MatriculaServiceImpl implements MatriculaService {
 
     @Override
     public MatriculaDTO ObtenerMatricula(int id) {
-
         Matricula m = matriculaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Matricula no encontrada"));
-
         return mapToDTO(m);
     }
 
     @Override
     public List<MatriculaDTO> listarMatricula() {
-        return matriculaRepository.findAll().stream().map(this::mapToDTO).collect(Collectors.toList());
+        return matriculaRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public MatriculaDTO actualizarMatricula(int id, Matricula matricula) {
         Matricula m = matriculaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Matricula no enxontrada"));
+                .orElseThrow(() -> new RuntimeException("Matricula no encontrada"));
 
         Alumno alu = alumnoRepo.findById(matricula.getAlumno().getId_Alumno())
-                .orElseThrow(() -> new RuntimeException("Almuno no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
 
         m.setAlumno(alu);
         m.setFecha_Matricula(matricula.getFecha_Matricula());
@@ -153,12 +166,10 @@ public class MatriculaServiceImpl implements MatriculaService {
 
         Matricula nuevo = matriculaRepository.save(m);
         return mapToDTO(nuevo);
-
     }
 
     @Override
     public void eliminarMatricula(int id) {
         matriculaRepository.deleteById(id);
     }
-
 }

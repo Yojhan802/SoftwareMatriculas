@@ -51,7 +51,7 @@ async function listarMatriculas() {
         }
 
         const matriculas = await response.json();
-        console.log("Datos recibidos:", matriculas); // Para depuración
+        console.log("Datos recibidos:", matriculas); // Revisa aquí si llegan nombreAlumno y apellidoAlumno
 
         cuerpoTabla.innerHTML = '';
 
@@ -68,27 +68,33 @@ async function listarMatriculas() {
 
         // Renderizado de filas
         matriculas.forEach(m => {
-            // --- MAPEO DE DATOS ROBUSTO ---
-            // Intenta leer el nombre nuevo (camelCase), si falla usa el antiguo
-            const id = m.idMatricula || m.id_Matricula;
+            // ID DE MATRICULA
+            const id = m.idMatricula || m.id_Matricula || m.id;
             
-            // Obtener ID alumno (soporta objeto anidado o ID directo)
-            let idAlumno = 'N/A';
-            if (m.alumno && m.alumno.idAlumno) idAlumno = m.alumno.idAlumno; // Objeto completo corregido
-            else if (m.alumno && m.alumno.Id_Alumno) idAlumno = m.alumno.Id_Alumno; // Objeto antiguo
-            else if (m.idAlumno) idAlumno = m.idAlumno; // ID directo
-            else if (m.id_alumno) idAlumno = m.id_alumno; // ID directo antiguo
+            // --- NUEVO: OBTENER NOMBRE DEL ALUMNO ---
+            // Leemos los campos que agregaste al DTO en Java
+            let nombreCompleto = "---";
             
-            // Fechas
+            if (m.nombreAlumno || m.apellidoAlumno) {
+                // Si el backend envía los nombres, los juntamos
+                const nombre = m.nombreAlumno || "";
+                const apellido = m.apellidoAlumno || "";
+                nombreCompleto = `<span class="fw-bold text-dark">${nombre} ${apellido}</span>`;
+            } else {
+                // Si no llegan (ej. caché antigua o error), mostramos el ID como respaldo
+                const idAl = m.idAlumno || m.id_alumno || "?";
+                nombreCompleto = `<span class="text-muted small">ID: ${idAl}</span>`;
+            }
+            
+            // FECHAS
             const fechaRaw = m.fechaMatricula || m.fecha_Matricula || m.Fecha_Matricula;
             let fechaTexto = "---";
             if (fechaRaw) {
-                // toLocaleDateString suele usar la zona horaria local, lo que puede restar un día
-                // Usamos UTC para asegurar consistencia
+                // Usamos UTC para evitar problemas de zona horaria
                 fechaTexto = new Date(fechaRaw).toLocaleDateString('es-PE', { timeZone: 'UTC' });
             }
 
-            // Datos generales
+            // DATOS GENERALES
             const periodo = m.periodo || m.Periodo || '';
             const nivel = m.nivel || '';
             const grado = m.grado || '';
@@ -101,7 +107,9 @@ async function listarMatriculas() {
             const fila = `
                 <tr>
                     <td>${id}</td>
-                    <td>${idAlumno}</td>
+                    
+                    <td>${nombreCompleto}</td>
+                    
                     <td>${fechaTexto}</td>
                     <td>${periodo}</td>
                     <td>${nivel}</td>
@@ -138,40 +146,32 @@ async function listarMatriculas() {
 // LÓGICA DE ELIMINACIÓN (DELETE)
 // =========================================================
 
-// Hacemos la función global para que el HTML onclick pueda verla
 window.eliminarMatricula = async function(id) {
-    // 1. Confirmación de seguridad
     if (!confirm('⚠️ ¿Estás seguro de eliminar esta matrícula?\n\nSe eliminarán AUTOMÁTICAMENTE todas las cuotas pendientes asociadas.\n(Si existen pagos realizados, la operación será bloqueada).')) {
         return;
     }
     
-    // 2. Feedback visual (Desactivar botones para evitar doble clic)
     const btn = document.querySelector(`button[onclick="eliminarMatricula(${id})"]`);
     if(btn) {
-        const contenidoOriginal = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     }
 
     try {
-        // 3. Petición al Backend
         const response = await fetch(`${API_URL_MATRICULA}/${id}`, { 
             method: 'DELETE' 
         });
 
         if (response.ok) {
-            // Éxito (Status 200 o 204)
             alert('✅ Matrícula eliminada correctamente.');
-            listarMatriculas(); // Recargar la tabla
+            listarMatriculas(); 
         } else {
-            // Error controlado (ej: tiene pagos asociados)
             const mensajeError = await response.text();
             alert('❌ No se pudo eliminar:\n' + mensajeError);
-            listarMatriculas(); // Recargar para restaurar botones
+            listarMatriculas(); 
         }
 
     } catch (error) {
-        // Error de red
         console.error(error);
         alert("❌ Error crítico de conexión al intentar eliminar.");
         listarMatriculas();
@@ -183,9 +183,8 @@ window.eliminarMatricula = async function(id) {
 // =========================================================
 
 window.editarMatricula = function(id) {
-    // Aquí puedes redirigir a tu formulario de edición o abrir un modal
     alert(`Funcionalidad de editar para ID: ${id} en construcción.`);
 };
 
-// Asegurar que la función de listado también sea global por si acaso
+// Asegurar que la función de listado también sea global
 window.listarMatriculas = listarMatriculas;

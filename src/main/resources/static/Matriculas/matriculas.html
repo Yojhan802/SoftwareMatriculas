@@ -22,12 +22,26 @@
       </div>
 
       <div
+        id="alerta-ya-matriculado"
+        class="alert alert-warning mt-3 border-warning"
+        style="display: none"
+      >
+        <h5 class="alert-heading text-warning">
+          <i class="fas fa-exclamation-triangle"></i> Atención
+        </h5>
+        <hr />
+        <p class="mb-0 text-dark">
+          El alumno <strong id="nombre-alumno-error"></strong> ya tiene una matrícula registrada en el periodo <strong>2025</strong>.
+        </p>
+      </div>
+
+      <div
         id="alumno-seleccionado-info"
         class="alert alert-success mt-3"
         style="display: none"
       >
         <h5 class="alert-heading">
-          <i class="fas fa-user-check"></i> Alumno Encontrado
+          <i class="fas fa-user-check"></i> Alumno Disponible
         </h5>
         <hr />
         <p class="mb-0">

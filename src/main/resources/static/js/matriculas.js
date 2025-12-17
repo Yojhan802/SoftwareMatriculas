@@ -37,22 +37,17 @@ function initMatriculas() {
     asignarEvento('btn-atras-paso2', 'click', goToStep1);
     asignarEvento('btn-siguiente-paso2', 'click', goToStep3);
     
-    // NUEVO: Listener para el Nivel
     asignarEvento('nivel-select', 'change', actualizarGradosPorNivel);
-    // Listener para validar cuando cambie el grado
     asignarEvento('grado-select', 'change', validarPaso2);
 
     asignarEvento('btn-atras-paso3', 'click', goToStep2);
     asignarEvento('btn-confirmar-matricula', 'click', confirmarMatricula);
 
-    // --- NUEVO: VALIDACIÓN DE INPUT DNI EN TIEMPO REAL ---
+    // Validación input DNI (solo números, max 8)
     const dniInput = document.getElementById('alumno-search-input');
     if (dniInput) {
         dniInput.addEventListener('input', function() {
-            // 1. Reemplazar cualquier caracter que NO sea número (0-9) por vacío
             this.value = this.value.replace(/[^0-9]/g, '');
-            
-            // 2. Si la longitud es mayor a 8, cortar el string
             if (this.value.length > 8) {
                 this.value = this.value.slice(0, 8);
             }
@@ -71,7 +66,12 @@ function asignarEvento(id, evento, funcion) {
 
 function resetUI() {
     document.getElementById('alumno-search-input').value = '';
+    
+    // Ocultar ambas alertas
     document.getElementById('alumno-seleccionado-info').style.display = 'none';
+    const alertaYaMatriculado = document.getElementById('alerta-ya-matriculado');
+    if(alertaYaMatriculado) alertaYaMatriculado.style.display = 'none';
+
     document.getElementById('btn-siguiente-paso1').disabled = true;
     
     // Resetear selects del paso 2
@@ -87,7 +87,7 @@ document.addEventListener("vista-cargada", (e) => {
 });
 
 // =========================================================
-// NAVEGACIÓN ENTRE PASOS
+// NAVEGACIÓN
 // =========================================================
 
 function showStep(stepNumber) {
@@ -112,23 +112,70 @@ function cancelarMatricula() {
 }
 
 // =========================================================
-// PASO 1: BÚSQUEDA
+// PASO 1: BÚSQUEDA Y VERIFICACIÓN (LÓGICA NUEVA)
 // =========================================================
+
+// Función que descarga la lista de matrículas y busca si el alumno ya existe
+async function verificarEstadoMatricula(idAlumno) {
+    // URL: GET /api/matricula (Ya existe en tu controlador)
+    const url = API_MATRICULA; 
+    const anioActual = '2025'; 
+
+    try {
+        const response = await fetch(url);
+        
+        if (response.ok) {
+            const listaMatriculas = await response.json();
+            
+            // Debug para ver cómo llegan los datos del backend
+            console.log("Matriculas cargadas:", listaMatriculas);
+            console.log("Buscando ID:", idAlumno);
+
+            // Buscamos coincidencia.
+            // NOTA: Probamos varias formas de escribir el ID por si acaso el DTO cambia
+            const existe = listaMatriculas.some(m => {
+                // Obtenemos el ID del alumno de la fila actual
+                const idEnLista = m.idAlumno || m.id_alumno || m.IdAlumno || (m.alumno && m.alumno.id);
+                // Obtenemos el periodo
+                const periodoEnLista = m.Periodo || m.periodo || m.anio;
+
+                // Comparamos como Strings para evitar errores de tipo (numero vs texto)
+                return (idEnLista && idEnLista.toString() === idAlumno.toString()) && 
+                       (periodoEnLista && periodoEnLista.toString() === anioActual);
+            });
+
+            return existe;
+        } 
+        return false; 
+    } catch (error) {
+        console.error("Error verificando:", error);
+        return false;
+    }
+}
 
 async function buscarAlumno() {
     const inputDni = document.getElementById('alumno-search-input');
     const dni = inputDni.value.trim();
     const btnBuscar = document.getElementById('btn-buscar-alumno');
+    
+    // Elementos UI
     const infoDiv = document.getElementById('alumno-seleccionado-info');
+    const alertaError = document.getElementById('alerta-ya-matriculado');
+    const btnSiguiente = document.getElementById('btn-siguiente-paso1');
 
     if (!dni || dni.length < 8) {
         alert("Por favor ingrese un DNI válido.");
         return;
     }
 
+    // UI Loading
     btnBuscar.disabled = true;
     btnBuscar.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Buscando...';
+    
     infoDiv.style.display = 'none';
+    if(alertaError) alertaError.style.display = 'none';
+    btnSiguiente.disabled = true;
+    alumnoSeleccionado = null;
 
     const url = `${API_ALUMNOS_BASE}/dni/${dni}`;
 
@@ -137,24 +184,38 @@ async function buscarAlumno() {
 
         if (response.status === 404) {
             alert("No se encontró ningún alumno con ese DNI.");
-            alumnoSeleccionado = null;
-            document.getElementById('btn-siguiente-paso1').disabled = true;
         } else if (response.ok) {
             const data = await response.json();
             
             if (data.IdAlumno) {
-                alumnoSeleccionado = {
+                const tempAlumno = {
                     id: data.IdAlumno,
                     dni: data.dniAlumno,
                     nombreCompleto: `${data.Nombre} ${data.Apellido}`
                 };
 
-                document.getElementById('nombre-alumno-display').textContent = alumnoSeleccionado.nombreCompleto;
-                document.getElementById('dni-alumno-display').textContent = alumnoSeleccionado.dni;
-                
-                infoDiv.style.display = 'block';
-                infoDiv.className = 'alert alert-success mt-3';
-                document.getElementById('btn-siguiente-paso1').disabled = false;
+                // === AQUÍ VERIFICAMOS SI YA ESTÁ EN LA LISTA ===
+                const yaMatriculado = await verificarEstadoMatricula(tempAlumno.id);
+
+                if (yaMatriculado) {
+                    // SI YA EXISTE: MOSTRAR ALERTA AMARILLA
+                    if(alertaError) {
+                        document.getElementById('nombre-alumno-error').textContent = tempAlumno.nombreCompleto;
+                        alertaError.style.display = 'block';
+                    } else {
+                        alert(`El alumno ${tempAlumno.nombreCompleto} YA está matriculado.`);
+                    }
+                    // NO habilitamos el botón siguiente
+                } else {
+                    // SI NO EXISTE: FLUJO NORMAL
+                    alumnoSeleccionado = tempAlumno;
+                    document.getElementById('nombre-alumno-display').textContent = alumnoSeleccionado.nombreCompleto;
+                    document.getElementById('dni-alumno-display').textContent = alumnoSeleccionado.dni;
+                    
+                    infoDiv.style.display = 'block';
+                    btnSiguiente.disabled = false;
+                }
+
             } else {
                 alert("La respuesta del servidor no contiene un ID válido.");
             }
@@ -187,16 +248,14 @@ function goToStep1() {
 }
 
 // =========================================================
-// PASO 2: DATOS (NUEVA LÓGICA)
+// PASO 2: DATOS 
 // =========================================================
 
-// Función que se ejecuta al cambiar el Nivel
 function actualizarGradosPorNivel() {
     const nivelSelect = document.getElementById('nivel-select');
     const gradoSelect = document.getElementById('grado-select');
     const nivel = nivelSelect.value;
 
-    // Limpiar opciones previas
     gradoSelect.innerHTML = '<option value="" disabled selected>Seleccione un Grado</option>';
     
     let opciones = [];
@@ -206,7 +265,6 @@ function actualizarGradosPorNivel() {
         opciones = GRADOS_SECUNDARIA;
     }
 
-    // Llenar el select
     if (opciones.length > 0) {
         gradoSelect.disabled = false;
         opciones.forEach(grado => {
@@ -219,7 +277,6 @@ function actualizarGradosPorNivel() {
         gradoSelect.disabled = true;
     }
 
-    // Validar el botón siguiente (se desactivará porque el grado se reseteó)
     validarPaso2();
 }
 
@@ -228,7 +285,6 @@ function validarPaso2() {
     const grado = document.getElementById('grado-select').value;
     const btnNext = document.getElementById('btn-siguiente-paso2');
     
-    // Solo habilitar si Nivel Y Grado tienen valor
     const esValido = (nivel !== "" && nivel !== null) && (grado !== "" && grado !== null);
     
     btnNext.disabled = !esValido;
@@ -245,16 +301,15 @@ function goToStep3() {
         return;
     }
 
-    // Guardar payload
+    // Payload para enviar al backend
     matriculaPayload = {
-        id_alumno: alumnoSeleccionado.id,
+        id_alumno: alumnoSeleccionado.id, // Asegúrate que tu DTO espera "id_alumno" o "idAlumno"
         Periodo: periodo,
         fecha_Matricula: fecha,
-        nivel: nivel, // Agregado al payload
+        nivel: nivel,
         grado: grado
     };
 
-    // Renderizar resumen
     document.getElementById('resumen-nombre-alumno').textContent = alumnoSeleccionado.nombreCompleto;
     document.getElementById('resumen-nivel').textContent = nivel;
     document.getElementById('resumen-grado').textContent = grado;
@@ -309,6 +364,7 @@ async function confirmarMatricula() {
             alert(`✅ Matrícula guardada exitosamente para ${alumnoSeleccionado.nombreCompleto}`);
             initMatriculas(); 
         } else {
+            // Intenta leer error si es texto o JSON
             const errorTxt = await response.text();
             alert("Error al guardar matrícula: " + errorTxt);
         }
