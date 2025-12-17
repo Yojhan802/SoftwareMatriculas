@@ -7,11 +7,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.dto.AlumnoDTO;
 import com.example.demo.dto.MatriculaDTO;
 import com.example.demo.entity.Alumno;
 import com.example.demo.entity.Cuota;
+import com.example.demo.entity.EstadoCuota;
 import com.example.demo.entity.Matricula;
 import com.example.demo.repository.AlumnoRepository;
 import com.example.demo.repository.CuotaRepository;
@@ -33,7 +35,7 @@ public class MatriculaServiceImpl implements MatriculaService {
     }
 
     // =========================================================================
-    // MÉTODO MODIFICADO PARA DECIFRAR NOMBRES
+    // MAPEO EXACTO A TUS VARIABLES DTO
     // =========================================================================
     private MatriculaDTO mapToDTO(Matricula matricula) {
         MatriculaDTO m = new MatriculaDTO();
@@ -44,33 +46,27 @@ public class MatriculaServiceImpl implements MatriculaService {
         m.setEstado(matricula.getEstado());
         m.setNivel(matricula.getNivel());
         m.setGrado(matricula.getGrado());
-        m.setMonto_Matricula(matricula.getMonto_Matricula());
+
+        if (matricula.getMonto_Matricula() != null) {
+            m.setMonto_Matricula(matricula.getMonto_Matricula());
+        }
 
         if (matricula.getAlumno() != null) {
             m.setId_alumno(matricula.getAlumno().getId_Alumno());
-            m.setDni_alumno(matricula.getAlumno().getDniAlumno().toString());
-            // --- AQUÍ ESTÁ EL CAMBIO ---
+            if (matricula.getAlumno().getDniAlumno() != null) {
+                m.setDni_alumno(matricula.getAlumno().getDniAlumno().toString());
+            }
+
             try {
-                // Obtenemos el texto cifrado de la BD
-                String nombreCifrado = matricula.getAlumno().getNombre();
-                String apellidoCifrado = matricula.getAlumno().getApellido();
-
-                // Usamos el método estático de AlumnoServiceImpl para decifrarlo
-                // La clave debe ser EXACTAMENTE la misma que usaste al guardar: "ClaveSecreta"
-                String nombrePlano = AlumnoServiceImpl.decifrar(nombreCifrado, "ClaveSecreta");
-                String apellidoPlano = AlumnoServiceImpl.decifrar(apellidoCifrado, "ClaveSecreta");
-
+                String nombrePlano = AlumnoServiceImpl.decifrar(matricula.getAlumno().getNombre(), "ClaveSecreta");
+                String apellidoPlano = AlumnoServiceImpl.decifrar(matricula.getAlumno().getApellido(), "ClaveSecreta");
                 m.setNombreAlumno(nombrePlano);
                 m.setApellidoAlumno(apellidoPlano);
             } catch (Exception e) {
-                // Si falla el descifrado (ej. datos antiguos no cifrados), mostramos el original o error
-                System.err.println("Error al decifrar alumno ID " + matricula.getAlumno().getId_Alumno() + ": " + e.getMessage());
                 m.setNombreAlumno(matricula.getAlumno().getNombre());
                 m.setApellidoAlumno(matricula.getAlumno().getApellido());
             }
-            // ---------------------------
         }
-
         return m;
     }
 
@@ -83,6 +79,7 @@ public class MatriculaServiceImpl implements MatriculaService {
     }
 
     @Override
+    @Transactional
     public MatriculaDTO crearMatricula(MatriculaDTO matricula) {
         Alumno alu = alumnoRepo.findById(matricula.getId_alumno())
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
@@ -94,23 +91,27 @@ public class MatriculaServiceImpl implements MatriculaService {
         ma.setGrado(matricula.getGrado());
         ma.setNivel(matricula.getNivel());
 
-        // Asignamos monto por defecto si viene 0 (opcional, buena práctica)
         if (matricula.getMonto_Matricula() == 0) {
             ma.setMonto_Matricula(150.00);
         } else {
             ma.setMonto_Matricula(matricula.getMonto_Matricula());
         }
 
-        // Establecer estado por defecto
         if (ma.getEstado() == null) {
             ma.setEstado("ACTIVO");
         }
 
         Matricula m = matriculaRepository.save(ma);
 
-        // --- LOGICA DE CUOTAS (Se mantiene igual) ---
+        // --- Generar Cuotas ---
         LocalDate hoy = LocalDate.now();
-        int yearInicio = hoy.getMonthValue() <= 3 ? hoy.getYear() : hoy.getYear() + 1;
+        int yearInicio;
+        try {
+            yearInicio = Integer.parseInt(matricula.getPeriodo());
+        } catch (NumberFormatException e) {
+            yearInicio = hoy.getYear();
+        }
+        
         YearMonth marzo = YearMonth.of(yearInicio, 3);
         int cont = 1;
 
@@ -122,20 +123,21 @@ public class MatriculaServiceImpl implements MatriculaService {
         cm.setMes("3");
         cm.setFechaVencimiento(marzo.atEndOfMonth());
         cm.setMonto((BigDecimal.valueOf(150.00)));
+        cm.setEstado(EstadoCuota.DEBE); 
         repoCuota.save(cm);
 
         // Cuotas Mensuales
-        AlumnoDTO alum = a.ObtenerAlumnoPorDni(alu.getDniAlumno()); // Esto ya devuelve el nombre decifrado
+        AlumnoDTO alum = a.ObtenerAlumnoPorDni(alu.getDniAlumno());
         for (int i = 3; i <= 12; i++) {
             Cuota c = new Cuota();
             c.setMatricula(m);
-            // Aquí 'alum' ya viene decifrado porque usas a.ObtenerAlumnoPorDni
             c.setDescripcion("Cuota N° " + cont + " de " + alum.getApellido());
             c.setAnio(matricula.getPeriodo());
             c.setMes(String.valueOf(i));
             YearMonth ym = YearMonth.of(yearInicio, i);
             c.setFechaVencimiento(ym.atEndOfMonth());
             c.setMonto((BigDecimal.valueOf(350.00)));
+            c.setEstado(EstadoCuota.DEBE);
             repoCuota.save(c);
             cont++;
         }
@@ -162,10 +164,12 @@ public class MatriculaServiceImpl implements MatriculaService {
         Matricula m = matriculaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Matricula no encontrada"));
 
-        Alumno alu = alumnoRepo.findById(matricula.getAlumno().getId_Alumno())
+        if(matricula.getAlumno() != null) {
+             Alumno alu = alumnoRepo.findById(matricula.getAlumno().getId_Alumno())
                 .orElseThrow(() -> new RuntimeException("Alumno no encontrado"));
-
-        m.setAlumno(alu);
+             m.setAlumno(alu);
+        }
+       
         m.setFecha_Matricula(matricula.getFecha_Matricula());
         m.setPeriodo(matricula.getPeriodo());
 
@@ -173,8 +177,41 @@ public class MatriculaServiceImpl implements MatriculaService {
         return mapToDTO(nuevo);
     }
 
+    // =========================================================================
+    // LÓGICA HÍBRIDA: ELIMINAR vs ANULAR
+    // =========================================================================
     @Override
+    @Transactional
     public void eliminarMatricula(int id) {
-        matriculaRepository.deleteById(id);
+        // 1. Buscamos la matrícula
+        Matricula m = matriculaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Matricula no encontrada"));
+
+        // 2. Verificamos si tiene AL MENOS UN PAGO
+        boolean tienePagos = false;
+        if (m.getCuotas() != null) {
+            tienePagos = m.getCuotas().stream()
+                    .anyMatch(c -> c.getEstado() == EstadoCuota.PAGADO);
+        }
+
+        if (!tienePagos) {
+            // CASO A: NO HA PAGADO NADA -> ELIMINACIÓN TOTAL (BD)
+            matriculaRepository.delete(m); 
+        } else {
+            // CASO B: SÍ TIENE PAGOS -> ANULACIÓN LÓGICA
+            // La matrícula pasa a ANULADO
+            m.setEstado("ANULADO");
+
+            // Solo anulamos las cuotas que aun DEBE
+            if (m.getCuotas() != null) {
+                for (Cuota c : m.getCuotas()) {
+                    if (c.getEstado() == EstadoCuota.DEBE) {
+                        c.setEstado(EstadoCuota.ANULADO);
+                    }
+                    // Las PAGADO se quedan PAGADO (Historial)
+                }
+            }
+            matriculaRepository.save(m);
+        }
     }
 }
