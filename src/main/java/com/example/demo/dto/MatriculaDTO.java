@@ -9,7 +9,8 @@ public class MatriculaDTO {
 
     private int id_Matricula;
     private int id_alumno;
-    
+    private String dni_alumno;
+
     private String nombreAlumno;   // Nuevo campo
     private String apellidoAlumno; // Nuevo campo
     // -------------------

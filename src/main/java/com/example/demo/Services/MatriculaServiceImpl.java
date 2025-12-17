@@ -48,7 +48,7 @@ public class MatriculaServiceImpl implements MatriculaService {
 
         if (matricula.getAlumno() != null) {
             m.setId_alumno(matricula.getAlumno().getId_Alumno());
-            
+            m.setDni_alumno(matricula.getAlumno().getDniAlumno().toString());
             // --- AQUÍ ESTÁ EL CAMBIO ---
             try {
                 // Obtenemos el texto cifrado de la BD
@@ -65,7 +65,7 @@ public class MatriculaServiceImpl implements MatriculaService {
             } catch (Exception e) {
                 // Si falla el descifrado (ej. datos antiguos no cifrados), mostramos el original o error
                 System.err.println("Error al decifrar alumno ID " + matricula.getAlumno().getId_Alumno() + ": " + e.getMessage());
-                m.setNombreAlumno(matricula.getAlumno().getNombre()); 
+                m.setNombreAlumno(matricula.getAlumno().getNombre());
                 m.setApellidoAlumno(matricula.getAlumno().getApellido());
             }
             // ---------------------------
@@ -93,16 +93,21 @@ public class MatriculaServiceImpl implements MatriculaService {
         ma.setFecha_Matricula(matricula.getFecha_Matricula());
         ma.setGrado(matricula.getGrado());
         ma.setNivel(matricula.getNivel());
-        
+
         // Asignamos monto por defecto si viene 0 (opcional, buena práctica)
-        if(matricula.getMonto_Matricula() == 0) ma.setMonto_Matricula(150.00);
-        else ma.setMonto_Matricula(matricula.getMonto_Matricula());
-        
+        if (matricula.getMonto_Matricula() == 0) {
+            ma.setMonto_Matricula(150.00);
+        } else {
+            ma.setMonto_Matricula(matricula.getMonto_Matricula());
+        }
+
         // Establecer estado por defecto
-        if(ma.getEstado() == null) ma.setEstado("ACTIVO");
+        if (ma.getEstado() == null) {
+            ma.setEstado("ACTIVO");
+        }
 
         Matricula m = matriculaRepository.save(ma);
-        
+
         // --- LOGICA DE CUOTAS (Se mantiene igual) ---
         LocalDate hoy = LocalDate.now();
         int yearInicio = hoy.getMonthValue() <= 3 ? hoy.getYear() : hoy.getYear() + 1;
@@ -114,7 +119,7 @@ public class MatriculaServiceImpl implements MatriculaService {
         cm.setMatricula(m);
         cm.setDescripcion("Cuota de Matricula");
         cm.setAnio(matricula.getPeriodo());
-        cm.setMes("-");
+        cm.setMes("3");
         cm.setFechaVencimiento(marzo.atEndOfMonth());
         cm.setMonto((BigDecimal.valueOf(150.00)));
         repoCuota.save(cm);

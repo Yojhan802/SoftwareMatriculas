@@ -70,7 +70,7 @@ async function listarMatriculas() {
         matriculas.forEach(m => {
             // ID DE MATRICULA
             const id = m.idMatricula || m.id_Matricula || m.id;
-            
+            let dni="";
             // --- NUEVO: OBTENER NOMBRE DEL ALUMNO ---
             // Leemos los campos que agregaste al DTO en Java
             let nombreCompleto = "---";
@@ -80,6 +80,7 @@ async function listarMatriculas() {
                 const nombre = m.nombreAlumno || "";
                 const apellido = m.apellidoAlumno || "";
                 nombreCompleto = `<span class="fw-bold text-dark">${nombre} ${apellido}</span>`;
+                dni = m.dni_alumno || "";
             } else {
                 // Si no llegan (ej. caché antigua o error), mostramos el ID como respaldo
                 const idAl = m.idAlumno || m.id_alumno || "?";
@@ -109,6 +110,7 @@ async function listarMatriculas() {
                     <td>${id}</td>
                     
                     <td>${nombreCompleto}</td>
+                    <td>${dni}</td>
                     
                     <td>${fechaTexto}</td>
                     <td>${periodo}</td>
