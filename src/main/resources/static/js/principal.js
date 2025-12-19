@@ -57,7 +57,7 @@ const permisos = {
   ADMIN: { dashboard: true, gestion: true, pagos: true, reportes: true, configuracion: true },
   SECRETARIA: { dashboard: true, gestion: true, pagos: true, reportes: false, configuracion: true },
   CAJA: { dashboard: true, gestion: false, pagos: true, reportes: true, configuracion: true },
-  DIRECTOR: { dashboard: true, gestion: false, pagos: false, reportes: true, configuracion: true }
+  DIRECTOR: { dashboard: true, gestion: false, pagos: false, reportes: true, configuracion: true, googleauth: true }
 };
 
 function aplicarPermisos(rolUsuario) {

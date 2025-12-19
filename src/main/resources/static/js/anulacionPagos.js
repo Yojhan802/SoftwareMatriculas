@@ -85,19 +85,27 @@ async function anularRecibo() {
         return;
     }
 
+    // Pedimos los datos del director
+    const usuarioDirector = prompt("Ingrese su nombre de usuario (Director):");
+    if (!usuarioDirector) return alert("Usuario obligatorio.");
+
+    const codigoDirector = prompt("Ingrese el código de Google Authenticator:");
+    if (!codigoDirector) return alert("Código obligatorio.");
+
     try {
         const response = await fetch(`/api/anulacion/confirmar/${encodeURIComponent(numRecibo)}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                usuarioDirector: usuarioDirector,
+                codigoDirector: parseInt(codigoDirector)
+            })
         });
 
         const result = await response.json();
 
         if (response.ok) {
             alert("✅ " + result.message);
-            // Limpiar la pantalla o recargar
             location.reload();
         } else {
             throw new Error(result.message);
@@ -107,3 +115,4 @@ async function anularRecibo() {
         alert("❌ Error: " + error.message);
     }
 }
+

@@ -45,6 +45,8 @@ public class Usuario implements UserDetails {
 
     @Column(name = "correo_electronico", unique = true, nullable = false, length = 100)
     private String correoElectronico;
+    @Column(name = "clave_2fa", length = 100)
+    private String clave2FA;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 10)

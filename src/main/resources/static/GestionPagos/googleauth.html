@@ -1,0 +1,19 @@
+<div class="payment-dashboard-card">
+  <h2>Configurar Google Authenticator</h2>
+
+  <input
+    type="text"
+    id="inputUsuario"
+    placeholder="Nombre de usuario (Director)"
+  />
+  <button onclick="generarQr()">Generar QR</button>
+
+  <div id="qrContainer" style="margin-top: 20px; display: none">
+    <p>Escanea este QR con Google Authenticator:</p>
+    <img id="qrImage" />
+    <p>
+      Clave secreta (guárdala por si pierdes el celular):
+      <span id="claveSecreta"></span>
+    </p>
+  </div>
+</div>
