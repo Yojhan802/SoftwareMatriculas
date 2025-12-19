@@ -1,7 +1,10 @@
 package com.example.demo.Services;
 
 import com.example.demo.dto.ReciboDetalleDTO;
+import com.example.demo.entity.Cuota;
+import com.example.demo.entity.EstadoCuota;
 import com.example.demo.entity.Recibo;
+import com.example.demo.repository.CuotaRepository;
 import com.example.demo.repository.ReciboRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnulacionServiceImpl implements AnulacionService{
     @Autowired
     private ReciboRepository reciboRepository;
+
+    @Autowired
+    private CuotaRepository cuotaRepository;
 
     @Override
     public ReciboDetalleDTO buscarPorNumeroRecibo(String numeroRecibo) {
@@ -50,20 +56,31 @@ public class AnulacionServiceImpl implements AnulacionService{
     @Override
     @Transactional // Importante para asegurar que el cambio se guarde en la BD
     public void anularRecibo(String numeroRecibo) {
-        // 1. Buscamos el recibo
+        // 1. Buscar el recibo por su número único
         Recibo recibo = reciboRepository.findByNumeroRecibo(numeroRecibo)
-                .orElseThrow(() -> new RuntimeException("No se puede anular: Recibo no encontrado"));
+                .orElseThrow(() -> new RuntimeException("Recibo no encontrado"));
 
-        // 2. Verificamos si ya está anulado para evitar redundancia
+        // 2. Validar si ya está anulado
         if (recibo.isAnulado()) {
-            throw new RuntimeException("El recibo ya se encuentra anulado.");
+            throw new RuntimeException("El recibo ya se encuentra anulado");
         }
 
-        // 3. Cambiamos el estado a true (en la BD se guardará como 1)
+        // 3. ANULACIÓN DEL RECIBO
+        // Cambiamos el boolean a true (se guarda como 1 en BD)
         recibo.setAnulado(true);
-
-        // 4. Guardamos los cambios
         reciboRepository.save(recibo);
+
+        // 4. ACTUALIZACIÓN DE LA CUOTA RELACIONADA
+        // Accedemos a la cuota mediante la relación OneToOne de la entidad
+        if (recibo.getCuota() != null) {
+            Cuota cuotaAsociada = recibo.getCuota();
+
+            // Cambiamos el estado a "ANULADO" (o el valor que use tu Enum EstadoCuota)
+            // Según tus imágenes, tienes un Enum llamado EstadoCuota
+            cuotaAsociada.setEstado(EstadoCuota.ANULADO);
+
+            cuotaRepository.save(cuotaAsociada);
+        }
     }
 
 
