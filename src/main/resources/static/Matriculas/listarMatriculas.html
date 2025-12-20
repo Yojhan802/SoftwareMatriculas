@@ -85,31 +85,38 @@
             <h6 class="m-0 font-weight-bold">
                 <i class="fas fa-table me-1"></i> Registros Actuales
             </h6>
-            
-            <div class="d-none d-md-block">
-                <div class="input-group input-group-sm">
-                    <div class="input-group-append">
-                            <i class="fas fa-search text-primary"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="card-body bg-white">
             
-            <div class="row mb-3 align-items-center">
-                <div class="col-md-6 col-sm-12 text-muted small">
+            <div class="row mb-3 align-items-center g-2">
+                
+                <div class="col-md-3 col-sm-12 text-muted small">
                     Mostrar 
-                    <select class="form-select form-select-sm d-inline-block w-auto border-light bg-light">
+                    <select class="form-select form-select-sm d-inline-block w-auto border-light bg-light" id="elementosPorPagina" onchange="aplicarFiltrosLocales()">
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                     </select>
-                    registros
+                    
                 </div>
-                <div class="col-md-6 col-sm-12 d-md-none mt-2">
-                    <input type="text" class="form-control form-control-sm search-input" placeholder="Buscar...">
+
+                <div class="col-md-3 col-sm-12">
+                    <select class="form-select form-select-sm border-secondary" id="filtroEstadoMatricula" onchange="aplicarFiltrosLocales()">
+                        <option value="TODOS">Todos los Estados</option>
+                        <option value="ACTIVO" selected>Solo Activos</option>
+                        <option value="ANULADO">Solo Anulados</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 col-sm-12">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-gray-400"></i></span>
+                        <input type="text" class="form-control border-start-0 search-input ps-0" 
+                               id="inputBusquedaMatricula" 
+                               placeholder="Buscar por alumno, DNI..." 
+                               onkeyup="aplicarFiltrosLocales()">
+                    </div>
                 </div>
             </div>
 
@@ -117,7 +124,7 @@
                 <table class="table table-hover mb-0" id="tablaMatriculas" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th style="width: 5%">ID Matricula</th>
+                            <th style="width: 5%">ID</th>
                             <th style="width: 20%">Alumno</th>
                             <th style="width: 15%">DNI</th>
                             <th style="width: 10%">Fecha</th>
@@ -131,7 +138,7 @@
                     </thead>
                     <tbody id="cuerpoTablaMatriculas">
                         <tr>
-                            <td colspan="9" class="text-center py-5">
+                            <td colspan="10" class="text-center py-5">
                                 <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
@@ -143,18 +150,13 @@
             </div>
 
             <div class="row mt-4 align-items-center">
-                <div class="col-md-5 text-muted small">
+                <div class="col-md-5 text-muted small" id="infoRegistros">
                     Mostrando registros del sistema
                 </div>
                 <div class="col-md-7">
                     <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-end mb-0 pagination-sm">
-                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1">Anterior</a></li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
-                        </ul>
+                        <ul class="pagination justify-content-end mb-0 pagination-sm" id="paginacionMatriculas">
+                            </ul>
                     </nav>
                 </div>
             </div>
@@ -164,10 +166,8 @@
 </div>
 
 <script>
-    // Llamamos a la función del JS cuando se carga este HTML
+    // Iniciar script
     if (typeof listarMatriculas === 'function') {
         listarMatriculas();
-    } else {
-        console.error("La función listarMatriculas no está definida. Verifica que listarMatriculas.js esté cargado.");
     }
 </script>

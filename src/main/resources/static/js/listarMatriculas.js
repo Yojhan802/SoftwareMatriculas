@@ -3,6 +3,9 @@
 // =========================================================
 const API_URL_MATRICULA = '/api/matricula';
 
+// VARIABLE GLOBAL PARA ALMACENAR DATOS RAW
+let todasLasMatriculas = [];
+
 // =========================================================
 // INICIALIZACIÓN
 // =========================================================
@@ -28,9 +31,10 @@ async function listarMatriculas() {
     const cuerpoTabla = document.getElementById('cuerpoTablaMatriculas');
     if (!cuerpoTabla) return; 
 
+    // Mostrar loading
     cuerpoTabla.innerHTML = `
         <tr>
-            <td colspan="9" class="text-center py-4">
+            <td colspan="10" class="text-center py-4">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Cargando...</span>
                 </div>
@@ -45,102 +49,151 @@ async function listarMatriculas() {
             throw new Error(`Error HTTP: ${response.status}`);
         }
 
-        const matriculas = await response.json();
-        cuerpoTabla.innerHTML = '';
-
-        if (matriculas.length === 0) {
-            cuerpoTabla.innerHTML = `
-                <tr>
-                    <td colspan="9" class="text-center py-4 text-muted">
-                        <i class="fas fa-inbox fa-2x mb-2"></i><br>
-                        No hay matrículas registradas
-                    </td>
-                </tr>`;
-            return;
-        }
-
-        matriculas.forEach(m => {
-            const id = m.idMatricula || m.id_Matricula || m.id;
-            let dni = "";
-            let nombreCompleto = "---";
-            
-            if (m.nombreAlumno || m.apellidoAlumno) {
-                const nombre = m.nombreAlumno || "";
-                const apellido = m.apellidoAlumno || "";
-                nombreCompleto = `<span class="fw-bold text-dark">${nombre} ${apellido}</span>`;
-                dni = m.dni_alumno || "";
-            } else {
-                const idAl = m.idAlumno || m.id_alumno || "?";
-                nombreCompleto = `<span class="text-muted small">ID: ${idAl}</span>`;
-            }
-            
-            const fechaRaw = m.fechaMatricula || m.fecha_Matricula || m.Fecha_Matricula;
-            let fechaTexto = "---";
-            if (fechaRaw) {
-                fechaTexto = new Date(fechaRaw).toLocaleDateString('es-PE', { timeZone: 'UTC' });
-            }
-
-            const periodo = m.periodo || m.Periodo || '';
-            const nivel = m.nivel || '';
-            const grado = m.grado || '';
-            const estado = m.estado || 'ACTIVO';
-            const monto = m.montoMatricula || m.monto_Matricula || 0;
-
-            // --- ESTILOS SEGÚN ESTADO ---
-            let badgeClass = 'bg-success';
-            let estiloFila = '';
-            let btnDisabled = '';
-
-            if (estado === 'ANULADO') {
-                badgeClass = 'bg-secondary'; // Gris para anulados
-                estiloFila = 'opacity: 0.6; background-color: #f8f9fa;'; 
-                btnDisabled = 'disabled';
-            } else if (estado !== 'ACTIVO') {
-                badgeClass = 'bg-danger';
-            }
-
-            const fila = `
-                <tr style="${estiloFila}">
-                    <td>${id}</td>
-                    <td>${nombreCompleto}</td>
-                    <td>${dni}</td>
-                    <td>${fechaTexto}</td>
-                    <td>${periodo}</td>
-                    <td>${nivel}</td>
-                    <td>${grado}</td> 
-                    <td>S/ ${parseFloat(monto).toFixed(2)}</td>
-                    <td><span class="badge ${badgeClass}">${estado}</span></td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary" 
-                                onclick="editarMatricula(${id})" 
-                                title="Editar" ${btnDisabled}>
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger ms-1" 
-                                onclick="eliminarMatricula(${id})" 
-                                title="Eliminar/Anular" ${btnDisabled}>
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `;
-            cuerpoTabla.innerHTML += fila;
-        });
+        // 1. GUARDAMOS LOS DATOS EN MEMORIA
+        todasLasMatriculas = await response.json();
+        
+        // 2. LLAMAMOS AL FILTRO PARA QUE DIBUJE
+        aplicarFiltrosLocales();
 
     } catch (error) {
         console.error('Error al listar:', error);
-        cuerpoTabla.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Error de conexión</td></tr>`;
+        cuerpoTabla.innerHTML = `<tr><td colspan="10" class="text-center text-danger">Error de conexión</td></tr>`;
     }
 }
 
 // =========================================================
-// LÓGICA DE ELIMINACIÓN INTELIGENTE
+// LÓGICA DE FILTRADO (NUEVA FUNCIÓN)
+// =========================================================
+function aplicarFiltrosLocales() {
+    // 1. Obtener valores de los inputs
+    const filtroEstado = document.getElementById('filtroEstadoMatricula').value; // TODOS, ACTIVO, ANULADO
+    const textoBusqueda = document.getElementById('inputBusquedaMatricula').value.toLowerCase().trim();
+    const cantidadMostrar = parseInt(document.getElementById('elementosPorPagina').value);
+
+    // 2. Filtrar el array global
+    const listaFiltrada = todasLasMatriculas.filter(m => {
+        // A. Filtro de Estado
+        const estadoM = m.estado || 'ACTIVO'; // Asumir activo si es null
+        const cumpleEstado = (filtroEstado === 'TODOS') || (estadoM === filtroEstado);
+
+        // B. Filtro de Texto (Nombre, Apellido o DNI)
+        let textoM = "";
+        if (m.nombreAlumno) {
+            textoM = `${m.nombreAlumno} ${m.apellidoAlumno} ${m.dni_alumno}`.toLowerCase();
+        } else {
+            // Soporte por si el DTO cambia
+            textoM = `${m.idAlumno} ${m.dni_alumno}`.toLowerCase();
+        }
+        const cumpleBusqueda = textoM.includes(textoBusqueda);
+
+        return cumpleEstado && cumpleBusqueda;
+    });
+
+    // 3. Limitar cantidad (Simulación de paginación simple)
+    const listaParaMostrar = listaFiltrada.slice(0, cantidadMostrar);
+
+    // 4. Dibujar
+    renderizarTabla(listaParaMostrar);
+}
+
+// =========================================================
+// LÓGICA DE RENDERIZADO (DIBUJAR HTML)
+// =========================================================
+function renderizarTabla(lista) {
+    const cuerpoTabla = document.getElementById('cuerpoTablaMatriculas');
+    if (!cuerpoTabla) return;
+
+    cuerpoTabla.innerHTML = '';
+
+    if (lista.length === 0) {
+        cuerpoTabla.innerHTML = `
+            <tr>
+                <td colspan="10" class="text-center py-4 text-muted">
+                    <i class="fas fa-filter fa-2x mb-2"></i><br>
+                    No se encontraron coincidencias
+                </td>
+            </tr>`;
+        return;
+    }
+
+    lista.forEach(m => {
+        const id = m.idMatricula || m.id_Matricula || m.id;
+        let dni = "";
+        let nombreCompleto = "---";
+        
+        if (m.nombreAlumno || m.apellidoAlumno) {
+            const nombre = m.nombreAlumno || "";
+            const apellido = m.apellidoAlumno || "";
+            nombreCompleto = `<span class="fw-bold text-dark">${nombre} ${apellido}</span>`;
+            dni = m.dni_alumno || "";
+        } else {
+            const idAl = m.idAlumno || m.id_alumno || "?";
+            nombreCompleto = `<span class="text-muted small">ID: ${idAl}</span>`;
+        }
+        
+        const fechaRaw = m.fechaMatricula || m.fecha_Matricula || m.Fecha_Matricula;
+        let fechaTexto = "---";
+        if (fechaRaw) {
+            fechaTexto = new Date(fechaRaw).toLocaleDateString('es-PE', { timeZone: 'UTC' });
+        }
+
+        const periodo = m.periodo || m.Periodo || '';
+        const nivel = m.nivel || '';
+        const grado = m.grado || '';
+        const estado = m.estado || 'ACTIVO';
+        const monto = m.montoMatricula || m.monto_Matricula || 0;
+
+        // --- ESTILOS SEGÚN ESTADO ---
+        let badgeClass = 'bg-success';
+        let estiloFila = '';
+        let btnDisabled = '';
+
+        if (estado === 'ANULADO') {
+            badgeClass = 'bg-secondary'; // Gris para anulados
+            estiloFila = 'opacity: 0.6; background-color: #f8f9fa;'; 
+            btnDisabled = 'disabled';
+        } else if (estado !== 'ACTIVO') {
+            badgeClass = 'bg-danger';
+        }
+
+        const fila = `
+            <tr style="${estiloFila}">
+                <td>${id}</td>
+                <td>${nombreCompleto}</td>
+                <td>${dni}</td>
+                <td>${fechaTexto}</td>
+                <td>${periodo}</td>
+                <td>${nivel}</td>
+                <td>${grado}</td> 
+                <td>S/ ${parseFloat(monto).toFixed(2)}</td>
+                <td><span class="badge ${badgeClass}">${estado}</span></td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="editarMatricula(${id})" 
+                            title="Editar" ${btnDisabled}>
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger ms-1" 
+                            onclick="eliminarMatricula(${id})" 
+                            title="Eliminar/Anular" ${btnDisabled}>
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        cuerpoTabla.innerHTML += fila;
+    });
+}
+
+// =========================================================
+// LÓGICA DE ELIMINACIÓN INTELIGENTE (TU LÓGICA ORIGINAL)
 // =========================================================
 window.eliminarMatricula = async function(id) {
     if (!confirm('⚠️ ¿Estás seguro de procesar esta matrícula?\n\n- Si NO tiene pagos: Se ELIMINARÁ permanentemente.\n- Si TIENE pagos: Se ANULARÁ (conservando historial de pagos).\n\n¿Desea continuar?')) {
         return;
     }
     
+    // Bloqueo visual del botón para evitar doble clic
     const btn = document.querySelector(`button[onclick="eliminarMatricula(${id})"]`);
     if(btn) {
         btn.disabled = true;
@@ -155,11 +208,11 @@ window.eliminarMatricula = async function(id) {
         if (response.ok) {
             const mensaje = await response.text();
             alert(`✅ Operación Exitosa:\n${mensaje}`);
-            listarMatriculas(); 
+            listarMatriculas(); // Recargar datos frescos
         } else {
             const mensajeError = await response.text();
             alert('❌ Error:\n' + mensajeError);
-            listarMatriculas(); 
+            listarMatriculas(); // Recargar para asegurar estado
         }
 
     } catch (error) {
@@ -174,3 +227,4 @@ window.editarMatricula = function(id) {
 };
 
 window.listarMatriculas = listarMatriculas;
+window.aplicarFiltrosLocales = aplicarFiltrosLocales; // Exponer para el HTML

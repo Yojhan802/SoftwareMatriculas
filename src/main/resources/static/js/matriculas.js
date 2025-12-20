@@ -330,7 +330,7 @@ function generarCuotasSimuladas(grado, periodo) {
     const costoPension = 350.00;
 
     const cuotas = [
-        { c: 'Matrícula', m: costoMatricula, f: `${periodo}-02-28` },
+        { c: 'Matrícula', m: costoMatricula, f: `${periodo}-03-31` },
         { c: 'Pensión Marzo', m: costoPension, f: `${periodo}-03-31` },
         { c: 'Pensión Abril', m: costoPension, f: `${periodo}-04-30` },
         { c: 'Pensión Mayo', m: costoPension, f: `${periodo}-05-31` }
