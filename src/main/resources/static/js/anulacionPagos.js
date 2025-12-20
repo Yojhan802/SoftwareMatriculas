@@ -1,118 +1,120 @@
-
 const API_BASE_URL = '/api';
 
 async function buscarRecibo() {
-    // 1. Obtener el número de recibo del input
     const input = document.getElementById('inputBuscarRecibo');
     const numeroRecibo = input.value.trim();
+    const card = document.getElementById('resultadoRecibo');
 
+    // VALIDACIÓN: Evitar buscar si el campo está vacío o tiene espacios
     if (!numeroRecibo) {
-        alert("Por favor, ingrese un número de recibo.");
+        alert("Por favor, ingrese un número de recibo válido.");
+        card.style.display = 'none'; // Limpieza de UI
         return;
     }
 
     try {
-        // 2. Llamada al nuevo endpoint del controlador
-        // Usamos encodeURIComponent por si el número tiene guiones o caracteres especiales
-        const response = await fetch(`/api/anulacion/buscar/${encodeURIComponent(numeroRecibo)}`);
+        // UI: Indicar que se está buscando (opcional: podrías deshabilitar el botón aquí)
+        const response = await fetch(`${API_BASE_URL}/anulacion/buscar/${encodeURIComponent(numeroRecibo)}`);
 
-        // 3. Manejo de errores de respuesta
         if (!response.ok) {
+            card.style.display = 'none'; // Limpieza si falla la búsqueda
             if (response.status === 404) {
                 throw new Error("El número de recibo no existe en el sistema.");
             }
-            // En caso de que el Service lance la excepción de "Ya está ANULADO"
             const errorData = await response.json();
             throw new Error(errorData.message || "Error al buscar el recibo.");
         }
 
         const data = await response.json();
-
-        // 4. Pintar los datos en el HTML usando los campos de tu DTO
-        // El DTO tiene: numeroRecibo, nombreAlumno, montoPagado, concepto
-        document.getElementById('lblRecibo').textContent = data.numeroRecibo;
-        document.getElementById('lblAlumno').textContent = data.nombreAlumno;
-
-        // Formatear el monto con 2 decimales
-        const monto = parseFloat(data.montoPagado);
-        document.getElementById('lblMonto').textContent = `S/. ${monto.toFixed(2)}`;
-
-        // 5. Mostrar la tarjeta de resultados
-        const card = document.getElementById('resultadoRecibo');
-        card.style.display = 'block';
-        card.classList.remove('hidden');
+        
+        // Llamamos a la función de dibujo que ya tiene la validación de 'anulado'
+        mostrarDetalleRecibo(data);
 
     } catch (error) {
         alert("⚠️ " + error.message);
-        // Ocultar la tarjeta si hubo error
-        document.getElementById('resultadoRecibo').style.display = 'none';
+        card.style.display = 'none';
     }
 }
 
 function mostrarDetalleRecibo(data) {
     const card = document.getElementById('resultadoRecibo');
 
-    // 1. Nueva validación: Usamos el boolean 'anulado' de tu entidad Recibo
+    // VALIDACIÓN: Verificar si el objeto data es válido
+    if (!data || Object.keys(data).length === 0) {
+        card.style.display = 'none';
+        return;
+    }
+
+    // 1. Validación de estado anulado (Boolean de la entidad)
     if (data.anulado) {
         alert("⚠️ Este recibo ya ha sido ANULADO.");
         card.style.display = 'none';
         return;
     }
 
-    // 2. Mapeo de datos usando los nombres exactos de tu ReciboDetalleDTO
-    // Cambiamos 'cuota.id' por 'data.numeroRecibo'
-    document.getElementById('lblRecibo').textContent = data.numeroRecibo;
+    // 2. Mapeo de datos (Asegurando nombres de tu DTO)
+    document.getElementById('lblRecibo').textContent = data.numeroRecibo || "---";
+    document.getElementById('lblAlumno').textContent = data.nombreAlumno || "Alumno no identificado";
 
-    // Mostramos el nombre del alumno (que ya viene descifrado o procesado del service)
-    document.getElementById('lblAlumno').textContent = data.nombreAlumno;
-
-    // Cambiamos 'cuota.monto' por 'data.montoPagado'
-    // Usamos parseFloat para asegurar que toFixed(2) funcione correctamente
     const monto = parseFloat(data.montoPagado);
-    document.getElementById('lblMonto').textContent = `S/. ${monto.toFixed(2)}`;
+    // VALIDACIÓN: Verificar que el monto sea un número válido
+    document.getElementById('lblMonto').textContent = !isNaN(monto) ? `S/. ${monto.toFixed(2)}` : "S/. 0.00";
 
-    // 3. Hacer visible el contenedor
     card.style.display = 'block';
     card.classList.remove('hidden');
 }
 
 async function anularRecibo() {
     const numRecibo = document.getElementById('lblRecibo').textContent;
+    const btnConfirmar = document.querySelector('.btn-danger-custom');
 
-    if (!numRecibo) return;
+    if (!numRecibo || numRecibo === "---") return;
 
-    if (!confirm(`¿Está seguro de que desea anular el recibo N° ${numRecibo}?`)) {
+    if (!confirm(`¿Está seguro de que desea anular el recibo N° ${numRecibo}? Esta acción es irreversible.`)) {
         return;
     }
 
-    // Pedimos los datos del director
+    // VALIDACIONES DE PROMPTS
     const usuarioDirector = prompt("Ingrese su nombre de usuario (Director):");
-    if (!usuarioDirector) return alert("Usuario obligatorio.");
+    if (usuarioDirector === null) return; // Usuario canceló
+    if (!usuarioDirector.trim()) return alert("El nombre de usuario es obligatorio.");
 
-    const codigoDirector = prompt("Ingrese el código de Google Authenticator:");
-    if (!codigoDirector) return alert("Código obligatorio.");
+    const codigoDirector = prompt("Ingrese el código de Google Authenticator (6 dígitos):");
+    if (codigoDirector === null) return;
+    
+    // VALIDACIÓN: Formato de código (debe ser numérico y de 6 dígitos)
+    const codigoRegex = /^\d{6}$/;
+    if (!codigoRegex.test(codigoDirector.trim())) {
+        return alert("El código debe ser exactamente de 6 números.");
+    }
 
     try {
-        const response = await fetch(`/api/anulacion/confirmar/${encodeURIComponent(numRecibo)}`, {
+        // UI: Bloquear botón para evitar doble clic (Race Condition)
+        btnConfirmar.disabled = true;
+        btnConfirmar.textContent = "Procesando...";
+
+        const response = await fetch(`${API_BASE_URL}/anulacion/confirmar/${encodeURIComponent(numRecibo)}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                usuarioDirector: usuarioDirector,
-                codigoDirector: parseInt(codigoDirector)
+                usuarioDirector: usuarioDirector.trim(),
+                codigoDirector: parseInt(codigoDirector.trim())
             })
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            alert("✅ " + result.message);
+            alert("✅ " + (result.message || "Recibo anulado con éxito."));
             location.reload();
         } else {
-            throw new Error(result.message);
+            throw new Error(result.message || "No se pudo completar la anulación.");
         }
 
     } catch (error) {
         alert("❌ Error: " + error.message);
+        // UI: Reestablecer botón si falla
+        btnConfirmar.disabled = false;
+        btnConfirmar.textContent = "⚠️ Confirmar Anulación";
     }
 }
-
