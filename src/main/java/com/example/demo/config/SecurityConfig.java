@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
                 .requestMatchers("/api/director/**").hasAnyRole("DIRECTOR", "ADMIN")
-                .requestMatchers("/api/2fa/**").hasRole("DIRECTOR")
+                .requestMatchers("/api/2fa/**", "/api/reportes/**").hasRole("DIRECTOR")
                 .requestMatchers("/api/anulacion/**").permitAll()
                 // Cualquier otra request necesita estar logueado
                 .anyRequest().authenticated()

@@ -1,0 +1,30 @@
+<div class="payment-dashboard-card">
+  <h2 class="payment-title">📄 Reporte de Cuotas Pendientes</h2>
+
+  <div class="search-group" style="background: #eef2f7; border-color: #dee2e6">
+    <select
+      id="reporteNivel"
+      class="form-control-custom"
+      onchange="actualizarGrados()"
+    >
+      <option value="">Seleccione Nivel</option>
+      <option value="Primaria">Primaria</option>
+      <option value="Secundaria">Secundaria</option>
+    </select>
+
+    <select id="reporteGrado" class="form-control-custom" disabled>
+      <option value="">-- Seleccione Grado --</option>
+    </select>
+
+    <button
+      class="btn-custom btn-primary-custom"
+      onclick="generarReporteCuotas()"
+    >
+      📥 Generar PDF
+    </button>
+  </div>
+
+  <small id="mensajeAyuda" style="color: #6c757d"
+    >* Seleccione un nivel para ver los grados disponibles.</small
+  >
+</div>
