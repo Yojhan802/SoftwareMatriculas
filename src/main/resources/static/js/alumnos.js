@@ -440,17 +440,33 @@ async function guardarAlumno() {
   }
 
   // Validar que sea un número válido
-  const dni = parseInt(dniValue);
-  if (isNaN(dni) || !/^\d{8}$/.test(dniValue)) {
-    mostrarAlerta("El DNI debe contener solo números", "warning");
-    document.getElementById("dniAlumno").classList.add("is-invalid");
-    document.getElementById("dniAlumno").focus();
-    return;
-  }
+const dni = parseInt(dniValue);
+if (isNaN(dni) || !/^\d{8}$/.test(dniValue)) {
+  mostrarAlerta("El DNI debe contener solo números", "warning");
+  document.getElementById("dniAlumno").classList.add("is-invalid");
+  document.getElementById("dniAlumno").focus();
+  return;
+}
 
-  const nombre = document.getElementById("nombre").value.trim();
-  const apellido = document.getElementById("apellido").value.trim();
-  const direccion = document.getElementById("direccion").value.trim();
+// ⭐ Validar DNI no puede ser todo ceros
+if (dniValue === '00000000') {
+  mostrarAlerta('El DNI no puede ser 00000000', 'danger');
+  document.getElementById('dniAlumno').classList.add('is-invalid');
+  document.getElementById('dniAlumno').focus();
+  return;
+}
+
+// ⭐ Validar DNI no puede empezar con 0
+if (dniValue.startsWith('0')) {
+  mostrarAlerta('El DNI no puede comenzar con 0. Ingrese un DNI válido', 'danger');
+  document.getElementById('dniAlumno').classList.add('is-invalid');
+  document.getElementById('dniAlumno').focus();
+  return;
+}
+
+const nombre = document.getElementById("nombre").value.trim();
+const apellido = document.getElementById("apellido").value.trim();
+const direccion = document.getElementById("direccion").value.trim();
 
   if (!nombre || !apellido || !direccion) {
     mostrarAlerta("Por favor complete todos los campos obligatorios", "warning");
