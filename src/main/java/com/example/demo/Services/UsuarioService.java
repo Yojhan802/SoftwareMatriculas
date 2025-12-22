@@ -1,5 +1,6 @@
 package com.example.demo.Services;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.example.demo.dto.ActualizarUsuarioDTO;
@@ -21,4 +22,7 @@ public interface UsuarioService {
     Optional<Usuario> findById(Integer usuarioId);
 
     Usuario finByUserName(String username);
+
+    List<Usuario> obtenerUsuariosPorRol(String nombreRol);
+
 }

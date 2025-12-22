@@ -1,6 +1,8 @@
 package com.example.demo.Services;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -107,5 +109,14 @@ public class UsuarioServiceImpl implements UsuarioService {
     public Usuario finByUserName(String username) {
         return usuarioRepository.findByNombreUsuario(username)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+    // En tu UsuarioService.java
+
+    @Override
+    public List<Usuario> obtenerUsuariosPorRol(String nombreRol) {
+
+        return usuarioRepository.findAll().stream()
+                .filter(u -> u.getRol().getNombreRol().equalsIgnoreCase(nombreRol))
+                .collect(Collectors.toList());
     }
 }
