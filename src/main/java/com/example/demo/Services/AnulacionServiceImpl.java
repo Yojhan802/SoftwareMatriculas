@@ -1,5 +1,9 @@
 package com.example.demo.Services;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.demo.dto.ReciboDetalleDTO;
 import com.example.demo.entity.Cuota;
 import com.example.demo.entity.EstadoCuota;
@@ -8,9 +12,6 @@ import com.example.demo.entity.Usuario;
 import com.example.demo.repository.CuotaRepository;
 import com.example.demo.repository.ReciboRepository;
 import com.example.demo.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AnulacionServiceImpl implements AnulacionService {
@@ -87,7 +88,7 @@ public class AnulacionServiceImpl implements AnulacionService {
         // 5. Actualizar cuota asociada
         if (recibo.getCuota() != null) {
             Cuota cuotaAsociada = recibo.getCuota();
-            cuotaAsociada.setEstado(EstadoCuota.ANULADO);
+            cuotaAsociada.setEstado(EstadoCuota.DEBE);
             cuotaRepository.save(cuotaAsociada);
         }
     }

@@ -18,64 +18,62 @@ import com.example.demo.Services.ReporteService;
 @CrossOrigin(origins = "*")
 public class ReporteController {
 
-@Autowired
-private ReporteService reporteService;
-///
-///// ================== CUOTAS PENDIENTES PDF ==================
-///
-///@GetMapping("/cuotas-pendientes")
-///public ResponseEntity<byte[]> generarCuotasPdf(
-///        @RequestParam String nivel,
-///        @RequestParam String grado,
-///        @RequestParam String periodo) {
-///
-///    try {
-///        byte[] pdf = reporteService.generarReportePago(
-///                nivel, grado, periodo, "PDF");  // ← Agregar periodo
-///
-///        HttpHeaders headers = new HttpHeaders();
-///        headers.setContentType(MediaType.APPLICATION_PDF);
-///        headers.setContentDispositionFormData(
-///                "attachment",
-///                "Reporte_Cuotas_" + periodo + ".pdf"
-///        );
-///
-///        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
-///
-///    } catch (Exception e) {
-///        e.printStackTrace();
-///        return ResponseEntity.internalServerError().build();
-///    }
-///}
-///
-///@GetMapping("/cuotas-pendientes-excel")
-///public ResponseEntity<byte[]> generarCuotasExcel(
-///        @RequestParam String nivel,
-///        @RequestParam String grado,
-///        @RequestParam String periodo) {
-///
-///    try {
-///        byte[] excel = reporteService.generarReportePago(
-///                nivel, grado, periodo, "EXCEL");  // ← Agregar periodo
-///
-///        HttpHeaders headers = new HttpHeaders();
-///        headers.setContentType(
-///                MediaType.parseMediaType(
-///                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-///                )
-///        );
-///        headers.setContentDispositionFormData(
-///                "attachment",
-///                "Reporte_Cuotas_" + periodo + ".xlsx"
-///        );
-///
-///        return new ResponseEntity<>(excel, headers, HttpStatus.OK);
-///
-///    } catch (Exception e) {
-///        e.printStackTrace();
-///        return ResponseEntity.internalServerError().build();
-///    }
-///}
+    @Autowired
+    private ReporteService reporteService;
+
+// ================== CUOTAS PENDIENTES PDF ==================
+    @GetMapping("/cuotas-pendientes")
+    public ResponseEntity<byte[]> generarCuotasPdf(
+            @RequestParam String nivel,
+            @RequestParam String grado) {
+
+        try {
+            byte[] pdf = reporteService.generarReportePago(
+                    nivel, grado, "PDF");  // ← Agregar periodo
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData(
+                    "attachment",
+                    "Reporte_Cuotas_" + grado + ".pdf"
+            );
+
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/cuotas-pendientes-excel")
+    public ResponseEntity<byte[]> generarCuotasExcel(
+            @RequestParam String nivel,
+            @RequestParam String grado
+    ) {
+
+        try {
+            byte[] excel = reporteService.generarReportePago(
+                    nivel, grado, "EXCEL");  // ← Agregar periodo
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(
+                    MediaType.parseMediaType(
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+            );
+            headers.setContentDispositionFormData(
+                    "attachment",
+                    "Reporte_Cuotas_" + grado + ".xlsx"
+            );
+
+            return new ResponseEntity<>(excel, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
     // ================== MATRICULADOS ==================
 
     @GetMapping("/matriculados")
