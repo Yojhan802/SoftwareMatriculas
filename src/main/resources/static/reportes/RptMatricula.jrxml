@@ -31,6 +31,7 @@
 		</box>
 	</style>
 	<parameter name="periodo" class="java.lang.String"/>
+	<parameter name="LOGO" class="java.io.InputStream"/>
 	<queryString language="SQL">
 		<![CDATA[SELECT 
     m.nivel,
@@ -95,9 +96,9 @@ ORDER BY m.nivel, m.grado, a.apellido]]>
 				<text><![CDATA[N° Telefono: 987654321]]></text>
 			</staticText>
 			<image>
-				<reportElement x="0" y="0" width="81" height="79" uuid="5efc6b40-f751-44dc-a7b0-7bf43eff2c54"/>
-				<imageExpression><![CDATA["C:/Users/edins/Pictures/Tesla.jpg"]]></imageExpression>
-			</image>
+    <reportElement x="0" y="0" width="81" height="79" uuid="5efc6b40-f751-44dc-a7b0-7bf43eff2c54"/>
+    <imageExpression><![CDATA[$P{LOGO}]]></imageExpression>
+</image>
 			<line>
 				<reportElement x="0" y="80" width="556" height="1" uuid="c9a94f1d-3a6b-4978-91d3-79b20d8aed42"/>
 			</line>
