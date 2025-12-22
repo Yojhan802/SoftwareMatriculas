@@ -1,4 +1,11 @@
-// Configuración de los grados por nivel
+// ========================================
+// reportes.js - Sistema de Reportes
+// ========================================
+
+// ✅ Usar ruta relativa como en alumnos.js
+const API_REPORTES = "/api/reportes";
+
+// Grados por nivel
 const opcionesGrados = {
     "Primaria": [
         { val: "Primer Año", text: "Primero de Primaria" },
@@ -17,57 +24,181 @@ const opcionesGrados = {
     ]
 };
 
+// ============= FUNCIONES GLOBALES =============
+
 function actualizarGrados() {
     const nivelSelect = document.getElementById('reporteNivel');
     const gradoSelect = document.getElementById('reporteGrado');
-    const nivelSeleccionado = nivelSelect.value;
+    
+    if (!nivelSelect || !gradoSelect) return;
+    
+    const nivel = nivelSelect.value;
 
-    // Limpiar opciones anteriores
     gradoSelect.innerHTML = '<option value="">-- Seleccione Grado --</option>';
 
-    if (nivelSeleccionado && opcionesGrados[nivelSeleccionado]) {
-        // Habilitar y llenar
+    if (nivel && opcionesGrados[nivel]) {
         gradoSelect.disabled = false;
-        opcionesGrados[nivelSeleccionado].forEach(grado => {
+        opcionesGrados[nivel].forEach(grado => {
             const option = document.createElement('option');
             option.value = grado.val;
             option.textContent = grado.text;
             gradoSelect.appendChild(option);
         });
     } else {
-        // Deshabilitar si no hay nivel
         gradoSelect.disabled = true;
     }
 }
 
-// La función de generar reporte se mantiene similar, pero ahora toma los valores de los selects
-async function generarReporteCuotas() {
-    const nivel = document.getElementById('reporteNivel').value;
-    const grado = document.getElementById('reporteGrado').value;
-    const btn = document.querySelector('button[onclick="generarReporteCuotas()"]');
+function deshabilitarBotones(estado) {
+    const botones = document.querySelectorAll('.btn-custom');
+    botones.forEach(btn => btn.disabled = estado);
+}
 
-    if (!nivel || !grado) {
-        alert("⚠️ Por favor, seleccione ambos campos.");
+// ============= REPORTE DE MATRICULADOS =============
+
+function generarReporteMatriculados(formato) {
+    console.log("🔵 Generando reporte de matriculados...", formato);
+    
+    const periodoInput = document.getElementById('periodoMatriculados');
+    if (!periodoInput) {
+        console.error("No se encontró el campo periodoMatriculados");
+        return;
+    }
+    
+    const periodo = periodoInput.value.trim();
+
+    if (!periodo) {
+        alert("⚠️ Por favor, ingrese un periodo.");
         return;
     }
 
-    try {
-        btn.disabled = true;
-        btn.textContent = "Generando...";
+    deshabilitarBotones(true);
 
-        const params = new URLSearchParams({ nivel, grado });
-        const response = await fetch(`${API_BASE_URL}/reportes/cuotas-pendientes?${params}`);
+    const endpoint = formato === 'EXCEL' ? '/matriculados-excel' : '/matriculados';
+    const extension = formato === 'EXCEL' ? '.xlsx' : '.pdf';
+    
+    const params = new URLSearchParams({ periodo });
+    
+    fetch(`${API_REPORTES}${endpoint}?${params}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: No se pudo generar el reporte`);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte_Matriculados_${periodo}${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            mostrarAlertaReportes("✅ Reporte generado exitosamente", "success");
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            mostrarAlertaReportes("❌ Error al generar reporte: " + error.message, "danger");
+        })
+        .finally(() => {
+            deshabilitarBotones(false);
+        });
+}
 
-        if (!response.ok) throw new Error("Error al obtener el reporte.");
+// ============= REPORTE DE CUOTAS PENDIENTES =============
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank');
+function generarReporteCuotas(formato) {
+    console.log("🔵 Generando reporte de cuotas...", formato);
+    
+    const nivelInput = document.getElementById('reporteNivel');
+    const gradoInput = document.getElementById('reporteGrado');
+    
+    if (!nivelInput || !gradoInput) {
+        console.error("No se encontraron los campos de nivel/grado");
+        return;
+    }
+    
+    const nivel = nivelInput.value;
+    const grado = gradoInput.value;
 
-    } catch (error) {
-        alert("❌ Error: " + error.message);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = "📥 Generar PDF";
+    if (!nivel || !grado) {
+        alert("⚠️ Por favor, seleccione nivel y grado.");
+        return;
+    }
+
+    deshabilitarBotones(true);
+
+    const endpoint = formato === 'EXCEL' ? '/cuotas-pendientes-excel' : '/cuotas-pendientes';
+    const extension = formato === 'EXCEL' ? '.xlsx' : '.pdf';
+
+    const params = new URLSearchParams({ nivel, grado });
+    
+    fetch(`${API_REPORTES}${endpoint}?${params}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: No se pudo generar el reporte`);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Reporte_Cuotas_${nivel}_${grado}${extension}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            
+            mostrarAlertaReportes("✅ Reporte generado exitosamente", "success");
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            mostrarAlertaReportes("❌ Error al generar reporte: " + error.message, "danger");
+        })
+        .finally(() => {
+            deshabilitarBotones(false);
+        });
+}
+
+// ============= MOSTRAR ALERTAS =============
+
+function mostrarAlertaReportes(mensaje, tipo = "success") {
+    let alertDiv = document.getElementById("alertContainerReportes");
+    
+    if (!alertDiv) {
+        // Si no existe, crear el contenedor
+        const contentArea = document.getElementById("content-area");
+        if (contentArea) {
+            alertDiv = document.createElement("div");
+            alertDiv.id = "alertContainerReportes";
+            contentArea.insertBefore(alertDiv, contentArea.firstChild);
+        }
+    }
+
+    if (alertDiv) {
+        alertDiv.innerHTML = `
+            <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                <i class="bi ${tipo === 'success' ? 'bi-check-circle' : tipo === 'danger' ? 'bi-x-circle' : 'bi-info-circle'}"></i>
+                ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        setTimeout(() => {
+            alertDiv.innerHTML = "";
+        }, 3000);
+    } else {
+        console.log(`${tipo.toUpperCase()}: ${mensaje}`);
     }
 }
+
+// ============= EXPONER FUNCIONES AL SCOPE GLOBAL =============
+
+window.generarReporteMatriculados = generarReporteMatriculados;
+window.generarReporteCuotas = generarReporteCuotas;
+window.actualizarGrados = actualizarGrados;
+
+console.log("✅ Módulo de reportes cargado");

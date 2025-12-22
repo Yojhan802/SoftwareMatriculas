@@ -1,0 +1,163 @@
+   <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.3-41034ca841d452f3305ba55b9042260aaa1ab5dd  -->
+<jasperReport name="RptPago" language="java" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="0bada8a0-dc15-4d7f-8b2e-f4faa18d28d0">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="matriculas"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<leftPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+			<rightPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<parameter name="p_nivel" class="java.lang.String"/>
+	<parameter name="p_grado" class="java.lang.String"/>
+	<query language="SQL"><![CDATA[SELECT 
+    CONCAT(a.nombre, ' ', a.apellido) AS nombre_alumno,
+    a.dni_alumno AS dni,
+    m.grado,
+    COUNT(c.id_cuota) AS cuotas_pendientes
+FROM alumno a
+INNER JOIN matricula m ON m.id_alumno = a.id_alumno
+INNER JOIN cuota c ON c.id_matricula = m.id_matricula
+WHERE m.nivel = $P{p_nivel}
+  AND m.grado = $P{p_grado}
+  AND c.estado = 'DEBE'
+  AND m.estado = 'ACTIVO'
+GROUP BY 
+    a.id_alumno,
+    a.nombre, 
+    a.apellido, 
+    a.dni_alumno, 
+    m.grado
+HAVING COUNT(c.id_cuota) > 0]]></query>
+	<field name="nombre_alumno" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="nombre_alumno"/>
+		<property name="com.jaspersoft.studio.field.label" value="nombre_alumno"/>
+	</field>
+	<field name="dni" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="dni_alumno"/>
+		<property name="com.jaspersoft.studio.field.label" value="dni"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="alumno"/>
+	</field>
+	<field name="grado" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="grado"/>
+		<property name="com.jaspersoft.studio.field.label" value="grado"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="matricula"/>
+	</field>
+	<field name="cuotas_pendientes" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="cuotas_pendientes"/>
+		<property name="com.jaspersoft.studio.field.label" value="cuotas_pendientes"/>
+	</field>
+	<background splitType="Stretch"/>
+	<title height="128" splitType="Stretch">
+		<element kind="staticText" uuid="ab6c1c2a-9f33-4482-8484-bd7cece51a4a" x="0" y="90" width="84" height="25" fontSize="16.0" bold="true">
+			<text><![CDATA[Nivel:]]></text>
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="line" uuid="c9a94f1d-3a6b-4978-91d3-79b20d8aed42" x="0" y="80" width="556" height="1">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="2d5ff27f-6fd8-4378-988d-3dc79ff4bafe" x="190" y="90" width="84" height="25" fontSize="16.0" bold="true">
+			<text><![CDATA[Grado:]]></text>
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="aeabf50a-71a5-4b57-9348-b5d138f6b6d0" x="415" y="10" width="50" height="20" hTextAlign="Right">
+			<text><![CDATA[Dia:]]></text>
+			<box rightPadding="4"/>
+		</element>
+		<element kind="textField" uuid="a27b3949-5d63-4026-95f2-716faeccd746" x="465" y="10" width="84" height="20" pattern="EEEEE dd MMMMM yyyy">
+			<expression><![CDATA[new java.util.Date()]]></expression>
+		</element>
+		<element kind="staticText" uuid="ce888cb6-c310-4184-90f4-12c678789be9" x="95" y="0" width="294" height="25" fontSize="19.0" bold="true">
+			<text><![CDATA[I.E.P Nikola Tesla-Huacho]]></text>
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="363a99aa-c771-4617-9f72-eee2ba57888f" x="95" y="40" width="205" height="15">
+			<text><![CDATA[N° Teléfono: 987654321]]></text>
+		</element>
+		<element kind="staticText" uuid="9118fed3-5a41-48fd-a8bd-ae1a49543bfa" x="95" y="25" width="294" height="15">
+			<text><![CDATA[Av. Cincuentenario 289- Hualmay/Huacho/Perú]]></text>
+		</element>
+		<expression><![CDATA[
+    new net.sf.jasperreports.engine.util.JRLoader()
+        .loadBytes(
+            this.getClass()
+                .getClassLoader()
+                .getResourceAsStream("static/img/Tesla.png")
+        )
+]]></expression>
+		<element kind="textField" uuid="373d387b-0a6d-46ab-8939-afedc21bf9a1" x="50" y="95" width="100" height="14">
+			<expression><![CDATA[$P{p_nivel}]]></expression>
+		</element>
+		<element kind="textField" uuid="8bea1474-f79a-4344-abd7-c39629962ab7" x="250" y="95" width="100" height="14">
+			<expression><![CDATA[$P{p_grado}]]></expression>
+		</element>
+		<element kind="line" uuid="da75a14c-71bf-4d59-8c1f-22a1586b0467" x="0" y="120" width="556" height="1">
+			<property name="local_mesure_unitheight" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+	</title>
+	<columnHeader height="30" splitType="Stretch">
+		<element kind="staticText" uuid="6f21ecfa-9282-49a6-81d3-e494edd38c51" x="0" y="0" width="100" height="30" bold="true" hTextAlign="Center">
+			<text><![CDATA[NOMBRES]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="08afadbd-c985-464c-9142-029619a48df6"/>
+		</element>
+		<element kind="staticText" uuid="f38b179d-7352-4047-99e3-2dbef7aa5654" x="100" y="0" width="100" height="30" bold="true" hTextAlign="Center">
+			<text><![CDATA[DNI]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e046aef5-55d8-4a46-8c26-1e0d3998e789"/>
+		</element>
+		<element kind="staticText" uuid="7f2f890e-a8f8-49f7-9de2-555855808a8d" x="200" y="0" width="100" height="30" bold="true" hTextAlign="Center">
+			<text><![CDATA[GRADO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="77345821-3320-44fa-92be-30be5638c651"/>
+		</element>
+		<element kind="staticText" uuid="5f057e2b-6ca8-4113-b2ad-2a05dbb07ec9" x="300" y="0" width="100" height="30" bold="true" hTextAlign="Center">
+			<text><![CDATA[CUOTAS P.]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="07d1614e-c6e8-4eb0-b66a-b60a3fd4fcdc"/>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="30" splitType="Stretch">
+			<element kind="textField" uuid="ccdfbdf7-d896-4fbd-a77f-db4dc46fe09c" x="0" y="0" width="100" height="30" hTextAlign="Center">
+				<expression><![CDATA[$F{nombre_alumno}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="08afadbd-c985-464c-9142-029619a48df6"/>
+			</element>
+			<element kind="textField" uuid="35ed05e5-62bf-4d11-aa13-c253ab7fc74f" x="100" y="0" width="100" height="30" hTextAlign="Center">
+				<expression><![CDATA[$F{dni}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e046aef5-55d8-4a46-8c26-1e0d3998e789"/>
+			</element>
+			<element kind="textField" uuid="0f6311c3-119b-446e-a07a-10cde0bf2a5f" x="200" y="0" width="100" height="30" hTextAlign="Center">
+				<expression><![CDATA[$F{grado}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="77345821-3320-44fa-92be-30be5638c651"/>
+			</element>
+			<element kind="textField" uuid="5dec341b-e173-41a3-b4ba-4116901d01cf" x="300" y="0" width="100" height="30" hTextAlign="Center">
+				<expression><![CDATA[$F{cuotas_pendientes}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="07d1614e-c6e8-4eb0-b66a-b60a3fd4fcdc"/>
+			</element>
+		</band>
+	</detail>
+</jasperReport>
