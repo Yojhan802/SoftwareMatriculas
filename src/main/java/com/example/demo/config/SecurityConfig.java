@@ -22,13 +22,11 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
 
-    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // DaoAuthenticationProvider
     @Bean
     public DaoAuthenticationProvider authProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
@@ -36,46 +34,46 @@ public class SecurityConfig {
         return provider;
     }
 
-    // AuthenticationManager para login manual
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 
-    // SecurityFilterChain
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos
-                .requestMatchers(
-                        "/index.html",
-                        "/login.html",
-                        "/api/users/login",
-                        "/api/users/register",
-                        "/api/users/me"
-                ).permitAll()
-                // Ejemplo de acceso por roles (ajusta a tus necesidades)
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
-                .requestMatchers("/api/director/**").hasAnyRole("DIRECTOR", "ADMIN")
-                .requestMatchers("/api/2fa/**", "/api/reportes/**").hasRole("DIRECTOR")
-                .requestMatchers("/api/anulacion/**").permitAll()
-                // Cualquier otra request necesita estar logueado
-                .anyRequest().authenticated()
+                        // Endpoints públicos
+                        .requestMatchers(
+                                "/index.html",
+                                "/login.html",
+                                "/api/users/login",
+                                "/api/users/register",
+                                "/api/users/me",
+                                "/ws-chat/**"  // NUEVO: WebSocket endpoint
+                        ).permitAll()
+                        // Endpoints de chat - requieren autenticación
+                        .requestMatchers("/api/chat/**").authenticated()  // NUEVO
+                        // Ejemplo de acceso por roles
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
+                        .requestMatchers("/api/director/**").hasAnyRole("DIRECTOR", "ADMIN")
+                        .requestMatchers("/api/2fa/**", "/api/reportes/**").hasRole("DIRECTOR")
+                        .requestMatchers("/api/anulacion/**").permitAll()
+                        // Cualquier otra request necesita estar logueado
+                        .anyRequest().authenticated()
                 )
-                // FormLogin para manejar sesión
                 .formLogin(form -> form
-                .loginPage("/index.html")
-                .loginProcessingUrl("/api/users/login")
-                .defaultSuccessUrl("/principal.html", true)
-                .permitAll()
+                        .loginPage("/index.html")
+                        .loginProcessingUrl("/api/users/login")
+                        .defaultSuccessUrl("/principal.html", true)
+                        .permitAll()
                 )
                 .logout(logout -> logout
-                .logoutUrl("/api/users/logout")
-                .logoutSuccessUrl("/index.html")
-                .permitAll()
+                        .logoutUrl("/api/users/logout")
+                        .logoutSuccessUrl("/index.html")
+                        .permitAll()
                 );
 
         return http.build();
