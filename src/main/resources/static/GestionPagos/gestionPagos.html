@@ -165,20 +165,22 @@
 <div class="payment-dashboard-card">
   <h2 class="payment-title">💸 Gestión de Pagos</h2>
 
-  <!-- BUSCADOR ALUMNO -->
   <div class="search-group">
     <input
-      type="text"
-      id="inputBuscarAlumno"
-      class="form-control-custom"
-      placeholder="Buscar Alumno por Nombre, Apellido o ID..."
-      autocomplete="off"
-      onkeypress="if(event.key === 'Enter') buscarDeudas()"
+            type="text"
+            id="inputBuscarAlumno"
+            class="form-control-custom"
+            placeholder="Buscar por DNI, Nombre o Apellido..."
+            autocomplete="off"
+            onkeypress="if(event.key === 'Enter') buscarDeudas()"
+            oninput="this.value = this.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g, '')"
     />
     <button class="btn-custom btn-secondary-custom" onclick="buscarDeudas()">
       🔍 Buscar
     </button>
   </div>
+
+  <div id="mensajeEstado"></div> </div>
 
   <!-- TABLA CUOTAS -->
   <h3>Cuotas Pendientes</h3>

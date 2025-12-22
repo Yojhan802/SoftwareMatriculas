@@ -22,7 +22,9 @@ public interface CuotaRepository extends JpaRepository<Cuota, Integer> {
     @Query(value = "SELECT c.* FROM cuota c "
             + "INNER JOIN matricula m ON c.id_matricula = m.id_matricula "
             + "INNER JOIN alumno a ON m.id_alumno = a.id_alumno "
-            + "WHERE a.dni_alumno =  :dni "
+            + "WHERE a.dni_alumno = :dni "
+            + "AND m.estado = 'ACTIVO' "
+            + "AND c.estado IN ('DEBE', 'PAGADO') " // <--- Esta condición omitirá las cuotas ANULADAS
             + "ORDER BY c.fecha_vencimiento ASC",
             nativeQuery = true)
     List<Cuota> buscarPorAlumno(String dni);

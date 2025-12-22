@@ -166,11 +166,12 @@
   <!-- BUSCAR RECIBO -->
   <div class="search-group" style="background: #fff5f5; border-color: #f5c6cb">
     <input
-      type="text"
-      id="inputBuscarRecibo"
-      class="form-control-custom"
-      placeholder="Ingrese N° de Recibo"
-      onkeypress="if(event.key==='Enter') buscarRecibo()"
+            type="text"
+            id="inputBuscarRecibo"
+            class="form-control-custom"
+            placeholder="Ingrese N° de Recibo (Letras, números y guiones)"
+            onkeypress="if(event.key==='Enter') buscarRecibo()"
+            oninput="this.value = this.value.replace(/[^a-zA-Z0-9-]/g, '')"
     />
     <button class="btn-custom btn-secondary-custom" onclick="buscarRecibo()">
       🔍 Buscar

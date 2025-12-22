@@ -58,9 +58,7 @@ public class AnulacionServiceImpl implements AnulacionService {
     @Override
     @Transactional
     public void anularRecibo(String numeroRecibo, String usuarioDirector, int codigoDirector) {
-
-        ///////////////////////////////////////////////////////////////////////////////////////////
-        // 1. Verificar usuario y rol
+        // 1. Validaciones de Seguridad (Director y TOTP)
         Usuario director = usuarioRepository.findByNombreUsuario(usuarioDirector)
                 .orElseThrow(() -> new RuntimeException("Usuario director no encontrado"));
 
@@ -68,28 +66,31 @@ public class AnulacionServiceImpl implements AnulacionService {
             throw new RuntimeException("Solo un director puede aprobar la anulación.");
         }
 
-        // 2. Verificar código TOTP
         if (!twoFactorAuthService.verificarCodigo(usuarioDirector, codigoDirector)) {
             throw new RuntimeException("Código incorrecto. Anulación cancelada.");
         }
-        //////////////////////////////////////////////////////////////////////////
-        // 3. Buscar recibo
-        Recibo recibo = reciboRepository.findByNumeroRecibo(numeroRecibo)
+
+        // 2. Buscar el recibo original
+        Recibo reciboOriginal = reciboRepository.findByNumeroRecibo(numeroRecibo)
                 .orElseThrow(() -> new RuntimeException("Recibo no encontrado"));
 
-        if (recibo.isAnulado()) {
-            throw new RuntimeException("El recibo ya se encuentra anulado");
+        if (reciboOriginal.isAnulado()) {
+            throw new RuntimeException("Este recibo ya fue anulado previamente.");
         }
 
-        // 4. Anular recibo
-        recibo.setAnulado(true);
-        reciboRepository.save(recibo);
+        // 3. ANULACIÓN PERMANENTE DEL RECIBO
+        reciboOriginal.setAnulado(true);
+        reciboRepository.save(reciboOriginal);
 
-        // 5. Actualizar cuota asociada
-        if (recibo.getCuota() != null) {
-            Cuota cuotaAsociada = recibo.getCuota();
-            cuotaAsociada.setEstado(EstadoCuota.DEBE);
-            cuotaRepository.save(cuotaAsociada);
+        // 4. CORRECCIÓN: ANULAR TAMBIÉN LA CUOTA
+        if (reciboOriginal.getCuota() != null) {
+            Cuota cuota = reciboOriginal.getCuota();
+
+            // IMPORTANTE: Cambiamos a ANULADO.
+            // Ya NO usamos 'DEBE' porque no queremos que se vuelva a pagar.
+            cuota.setEstado(EstadoCuota.ANULADO);
+
+            cuotaRepository.save(cuota);
         }
     }
 }

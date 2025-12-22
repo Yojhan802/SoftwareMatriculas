@@ -183,11 +183,9 @@ public class MatriculaServiceImpl implements MatriculaService {
     @Override
     @Transactional
     public void eliminarMatricula(int id) {
-        // 1. Buscamos la matrícula
         Matricula m = matriculaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Matricula no encontrada"));
 
-        // 2. Verificamos si tiene AL MENOS UN PAGO
         boolean tienePagos = false;
         if (m.getCuotas() != null) {
             tienePagos = m.getCuotas().stream()
@@ -195,20 +193,16 @@ public class MatriculaServiceImpl implements MatriculaService {
         }
 
         if (!tienePagos) {
-            // CASO A: NO HA PAGADO NADA -> ELIMINACIÓN TOTAL (BD)
-            matriculaRepository.delete(m); 
+            matriculaRepository.delete(m);
         } else {
-            // CASO B: SÍ TIENE PAGOS -> ANULACIÓN LÓGICA
-            // La matrícula pasa a ANULADO
+            // CAMBIO: La matrícula pasa a ANULADO
             m.setEstado("ANULADO");
 
-            // Solo anulamos las cuotas que aun DEBE
+            // CAMBIO CRÍTICO: Anulamos TODAS las cuotas, sin importar si estaban pagadas o no.
+            // Esto garantiza que el repositorio no las encuentre al buscar deudas o historial.
             if (m.getCuotas() != null) {
                 for (Cuota c : m.getCuotas()) {
-                    if (c.getEstado() == EstadoCuota.DEBE) {
-                        c.setEstado(EstadoCuota.ANULADO);
-                    }
-                    // Las PAGADO se quedan PAGADO (Historial)
+                    c.setEstado(EstadoCuota.ANULADO);
                 }
             }
             matriculaRepository.save(m);

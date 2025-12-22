@@ -1,23 +1,24 @@
 const API_BASE_URL = '/api';
 
+// Reglas de validación: Solo letras, espacios, tildes y eñes
+const REGEX_SOLO_TEXTO = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$/;
+
 async function buscarRecibo() {
     const input = document.getElementById('inputBuscarRecibo');
     const numeroRecibo = input.value.trim();
     const card = document.getElementById('resultadoRecibo');
 
-    // VALIDACIÓN: Evitar buscar si el campo está vacío o tiene espacios
     if (!numeroRecibo) {
-        alert("Por favor, ingrese un número de recibo válido.");
-        card.style.display = 'none'; // Limpieza de UI
+        alert("⚠️ Por favor, ingrese un número de recibo válido.");
+        card.style.display = 'none';
         return;
     }
 
     try {
-        // UI: Indicar que se está buscando (opcional: podrías deshabilitar el botón aquí)
         const response = await fetch(`${API_BASE_URL}/anulacion/buscar/${encodeURIComponent(numeroRecibo)}`);
 
         if (!response.ok) {
-            card.style.display = 'none'; // Limpieza si falla la búsqueda
+            card.style.display = 'none';
             if (response.status === 404) {
                 throw new Error("El número de recibo no existe en el sistema.");
             }
@@ -26,8 +27,6 @@ async function buscarRecibo() {
         }
 
         const data = await response.json();
-        
-        // Llamamos a la función de dibujo que ya tiene la validación de 'anulado'
         mostrarDetalleRecibo(data);
 
     } catch (error) {
@@ -39,25 +38,21 @@ async function buscarRecibo() {
 function mostrarDetalleRecibo(data) {
     const card = document.getElementById('resultadoRecibo');
 
-    // VALIDACIÓN: Verificar si el objeto data es válido
     if (!data || Object.keys(data).length === 0) {
         card.style.display = 'none';
         return;
     }
 
-    // 1. Validación de estado anulado (Boolean de la entidad)
     if (data.anulado) {
         alert("⚠️ Este recibo ya ha sido ANULADO.");
         card.style.display = 'none';
         return;
     }
 
-    // 2. Mapeo de datos (Asegurando nombres de tu DTO)
     document.getElementById('lblRecibo').textContent = data.numeroRecibo || "---";
     document.getElementById('lblAlumno').textContent = data.nombreAlumno || "Alumno no identificado";
 
     const monto = parseFloat(data.montoPagado);
-    // VALIDACIÓN: Verificar que el monto sea un número válido
     document.getElementById('lblMonto').textContent = !isNaN(monto) ? `S/. ${monto.toFixed(2)}` : "S/. 0.00";
 
     card.style.display = 'block';
@@ -74,22 +69,30 @@ async function anularRecibo() {
         return;
     }
 
-    // VALIDACIONES DE PROMPTS
+    // 1. VALIDACIÓN: Usuario Director (Solo texto)
     const usuarioDirector = prompt("Ingrese su nombre de usuario (Director):");
-    if (usuarioDirector === null) return; // Usuario canceló
-    if (!usuarioDirector.trim()) return alert("El nombre de usuario es obligatorio.");
+    if (usuarioDirector === null) return;
 
+    const userTrimmed = usuarioDirector.trim();
+    if (!userTrimmed) return alert("⚠️ El nombre de usuario es obligatorio.");
+
+    // Bloquear si contiene símbolos o números
+    if (!REGEX_SOLO_TEXTO.test(userTrimmed)) {
+        return alert("❌ Error: El nombre de usuario solo puede contener letras y espacios.");
+    }
+
+    // 2. VALIDACIÓN: Código TOTP (Solo 6 números)
     const codigoDirector = prompt("Ingrese el código de Google Authenticator (6 dígitos):");
     if (codigoDirector === null) return;
-    
-    // VALIDACIÓN: Formato de código (debe ser numérico y de 6 dígitos)
+
+    const codeTrimmed = codigoDirector.trim();
     const codigoRegex = /^\d{6}$/;
-    if (!codigoRegex.test(codigoDirector.trim())) {
-        return alert("El código debe ser exactamente de 6 números.");
+
+    if (!codigoRegex.test(codeTrimmed)) {
+        return alert("❌ Error: El código debe ser exactamente de 6 números (sin símbolos ni letras).");
     }
 
     try {
-        // UI: Bloquear botón para evitar doble clic (Race Condition)
         btnConfirmar.disabled = true;
         btnConfirmar.textContent = "Procesando...";
 
@@ -97,15 +100,15 @@ async function anularRecibo() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                usuarioDirector: usuarioDirector.trim(),
-                codigoDirector: parseInt(codigoDirector.trim())
+                usuarioDirector: userTrimmed,
+                codigoDirector: parseInt(codeTrimmed)
             })
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            alert("✅ " + (result.message || "Recibo anulado con éxito."));
+            alert("✅ El recibo y su cuota han sido invalidados permanentemente.");
             location.reload();
         } else {
             throw new Error(result.message || "No se pudo completar la anulación.");
@@ -113,7 +116,6 @@ async function anularRecibo() {
 
     } catch (error) {
         alert("❌ Error: " + error.message);
-        // UI: Reestablecer botón si falla
         btnConfirmar.disabled = false;
         btnConfirmar.textContent = "⚠️ Confirmar Anulación";
     }
