@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.example.demo.entity.ChatMessage;
+import com.example.demo.entity.Conversation;
 import com.example.demo.entity.Usuario;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
