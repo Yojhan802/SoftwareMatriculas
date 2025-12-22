@@ -9,8 +9,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SendMessageRequest {
 
-    private Long conversacionId; // ✅ Puede ser null si es el primer mensaje
+    // 🧵 Conversación
+    private Long conversacionId;
+
+    // 👤 Destinatario
     private Integer destinatarioId;
+
+    // 🔐 CIFRADO E2E (DOBLE COPIA)
+    private String contenidoCifradoDestinatario;
+    private String contenidoCifradoRemitente;
+
+    // ⚠️ Legacy / fallback (opcional)
     private String contenidoCifrado;
+
+    // 🔐 Flag
     private Boolean cifrado;
 }

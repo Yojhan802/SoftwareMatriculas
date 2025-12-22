@@ -27,6 +27,9 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /* =========================
+       RELACIONES
+    ========================= */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "conversation_id", nullable = false)
     private Conversation conversation;
@@ -39,11 +42,26 @@ public class ChatMessage {
     @JoinColumn(name = "destinatario_id", nullable = false)
     private Usuario destinatario;
 
-    @Column(name = "contenido_cifrado", columnDefinition = "TEXT", nullable = false)
-    private String contenidoCifrado;
+    /* =========================
+       CONTENIDO E2E
+    ========================= */
+    // 🔐 Copia cifrada para el destinatario
+    @Column(name = "contenido_cifrado_destinatario", columnDefinition = "TEXT", nullable = false)
+    private String contenidoCifradoDestinatario;
 
+    // 🔐 Copia cifrada para el remitente
+    @Column(name = "contenido_cifrado_remitente", columnDefinition = "TEXT", nullable = false)
+    private String contenidoCifradoRemitente;
+
+    // ⚠️ Legacy (opcional, puedes borrar luego)
+    // @Column(name = "contenido_cifrado", columnDefinition = "TEXT")
+    // private String contenidoCifrado;
+
+    /* =========================
+       METADATA
+    ========================= */
     @Column(name = "cifrado", nullable = false)
-    private Boolean cifrado = true; // ✅ Por defecto true
+    private Boolean cifrado = true;
 
     @Column(name = "fecha_envio", nullable = false)
     private LocalDateTime fechaEnvio;
@@ -54,6 +72,9 @@ public class ChatMessage {
     @Column(name = "fecha_lectura")
     private LocalDateTime fechaLectura;
 
+    /* =========================
+       LIFECYCLE
+    ========================= */
     @PrePersist
     protected void onCreate() {
         if (fechaEnvio == null) {
