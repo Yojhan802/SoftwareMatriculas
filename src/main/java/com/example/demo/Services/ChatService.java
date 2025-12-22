@@ -31,6 +31,9 @@ public class ChatService {
     private final UserKeysRepository userKeysRepository;
     private final UsuarioRepository usuarioRepository;
 
+    /**
+     * Enviar mensaje cifrado
+     */
     @Transactional
     public ChatMessageDTO sendMessage(Usuario remitente, SendMessageRequest request) {
         Usuario destinatario = usuarioRepository.findById(request.getDestinatarioId())
@@ -42,7 +45,13 @@ public class ChatService {
         }
 
         // Buscar o crear conversación
-        Conversation conversation = getOrCreateConversation(remitente, destinatario);
+        Conversation conversation;
+        if (request.getConversacionId() != null) {
+            conversation = conversationRepository.findById(request.getConversacionId())
+                    .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
+        } else {
+            conversation = getOrCreateConversation(remitente, destinatario);
+        }
 
         // Crear mensaje
         ChatMessage message = new ChatMessage();
@@ -50,7 +59,9 @@ public class ChatService {
         message.setRemitente(remitente);
         message.setDestinatario(destinatario);
         message.setContenidoCifrado(request.getContenidoCifrado());
+        message.setCifrado(request.getCifrado() != null ? request.getCifrado() : true);
         message.setLeido(false);
+        message.setFechaEnvio(LocalDateTime.now());
 
         message = messageRepository.save(message);
 
@@ -61,14 +72,17 @@ public class ChatService {
         return convertToDTO(message);
     }
 
+    /**
+     * Obtener mensajes de una conversación
+     */
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getConversationMessages(Long conversacionId, Usuario usuario) {
         Conversation conversation = conversationRepository.findById(conversacionId)
                 .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
 
         // Verificar que el usuario sea parte de la conversación
-        if (!conversation.getUsuario().getId().equals(usuario.getId()) &&
-            !conversation.getAdmin().getId().equals(usuario.getId())) {
+        if (!conversation.getUsuario().getId().equals(usuario.getId())
+                && !conversation.getAdmin().getId().equals(usuario.getId())) {
             throw new RuntimeException("No tienes acceso a esta conversación");
         }
 
@@ -76,19 +90,25 @@ public class ChatService {
         return messages.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    /**
+     * Obtener todas las conversaciones de un usuario
+     */
     @Transactional(readOnly = true)
     public List<ConversationDTO> getUserConversations(Usuario usuario) {
         List<Conversation> conversations = conversationRepository
                 .findAllByUserOrderByFechaUltimoMensajeDesc(usuario);
 
         return conversations.stream().map(conv -> {
-            ConversationDTO dto = convertConversationToDTO(conv);
+            ConversationDTO dto = convertConversationToDTO(conv, usuario);
             Long unreadCount = messageRepository.countUnreadMessages(conv, usuario);
             dto.setMensajesNoLeidos(unreadCount);
             return dto;
         }).collect(Collectors.toList());
     }
 
+    /**
+     * Marcar mensajes como leídos
+     */
     @Transactional
     public void markMessagesAsRead(Long conversacionId, Usuario usuario) {
         Conversation conversation = conversationRepository.findById(conversacionId)
@@ -107,6 +127,9 @@ public class ChatService {
         messageRepository.saveAll(messages);
     }
 
+    /**
+     * Registrar clave pública RSA de un usuario
+     */
     @Transactional
     public void registerPublicKey(Usuario usuario, String clavePublica) {
         UserKeys userKeys = userKeysRepository.findByUsuario(usuario)
@@ -118,6 +141,9 @@ public class ChatService {
         userKeysRepository.save(userKeys);
     }
 
+    /**
+     * Obtener clave pública por ID de usuario
+     */
     @Transactional(readOnly = true)
     public PublicKeyDTO getPublicKey(Integer usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -129,6 +155,67 @@ public class ChatService {
         return new PublicKeyDTO(usuario.getId(), userKeys.getClavePublica());
     }
 
+    /**
+     * Obtener clave pública por nombre de usuario
+     */
+    @Transactional(readOnly = true)
+    public PublicKeyDTO getPublicKeyByUsername(String username) {
+        // ⚠️ IMPORTANTE: Verifica que el método en tu UsuarioRepository sea el correcto
+        // Puede ser findByUsername o findByNombreUsuario según tu entidad
+        Usuario usuario = usuarioRepository.findByNombreUsuario(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return getPublicKey(usuario.getId());
+    }
+
+    /**
+     * Crear nueva conversación
+     */
+    @Transactional
+    public ConversationDTO createConversation(Usuario remitente, Integer destinatarioId) {
+        Usuario destinatario = usuarioRepository.findById(destinatarioId)
+                .orElseThrow(() -> new RuntimeException("Destinatario no encontrado"));
+
+        // Verificar si ya existe una conversación entre estos usuarios
+        Conversation existingConversation = conversationRepository
+                .findConversationBetweenUsers(remitente, destinatario)
+                .orElse(null);
+
+        if (existingConversation != null) {
+            // Si ya existe, retornar la conversación existente
+            return convertConversationToDTO(existingConversation, remitente);
+        }
+
+        // Si no existe, crear nueva conversación
+        Conversation newConversation = new Conversation();
+
+        // Determinar quién es admin y quién es usuario regular
+        boolean remitenteEsAdmin = remitente.getRol().getNombreRol().equalsIgnoreCase("ADMIN");
+        boolean destinatarioEsAdmin = destinatario.getRol().getNombreRol().equalsIgnoreCase("ADMIN");
+
+        if (remitenteEsAdmin) {
+            newConversation.setAdmin(remitente);
+            newConversation.setUsuario(destinatario);
+        } else if (destinatarioEsAdmin) {
+            newConversation.setAdmin(destinatario);
+            newConversation.setUsuario(remitente);
+        } else {
+            // Si ninguno es admin, el remitente será considerado como usuario
+            newConversation.setUsuario(remitente);
+            newConversation.setAdmin(destinatario);
+        }
+
+        newConversation.setEstado(Conversation.EstadoConversacion.ACTIVA);
+        newConversation.setFechaCreacion(LocalDateTime.now());
+        newConversation.setFechaUltimoMensaje(LocalDateTime.now());
+
+        newConversation = conversationRepository.save(newConversation);
+
+        return convertConversationToDTO(newConversation, remitente);
+    }
+
+    /**
+     * Buscar o crear conversación entre dos usuarios
+     */
     private Conversation getOrCreateConversation(Usuario user1, Usuario user2) {
         // Determinar quién es admin y quién es usuario regular
         Usuario admin = user2.getRol().getNombreRol().equalsIgnoreCase("ADMIN") ? user2 : user1;
@@ -140,10 +227,15 @@ public class ChatService {
                     newConv.setUsuario(regularUser);
                     newConv.setAdmin(admin);
                     newConv.setEstado(Conversation.EstadoConversacion.ACTIVA);
+                    newConv.setFechaCreacion(LocalDateTime.now());
+                    newConv.setFechaUltimoMensaje(LocalDateTime.now());
                     return conversationRepository.save(newConv);
                 });
     }
 
+    /**
+     * Convertir ChatMessage a DTO
+     */
     private ChatMessageDTO convertToDTO(ChatMessage message) {
         return new ChatMessageDTO(
                 message.getId(),
@@ -154,11 +246,22 @@ public class ChatService {
                 message.getDestinatario().getNombreCompleto(),
                 message.getContenidoCifrado(),
                 message.getFechaEnvio(),
-                message.getLeido()
+                message.getLeido(),
+                message.getCifrado() // ✅ Agregar campo cifrado
         );
     }
 
-    private ConversationDTO convertConversationToDTO(Conversation conversation) {
+    /**
+     * Convertir Conversation a DTO
+     */
+    private ConversationDTO convertConversationToDTO(Conversation conversation, Usuario currentUser) {
+        // Determinar el "otro" usuario (con quien se está conversando)
+        boolean currentUserIsRegular = conversation.getUsuario().getId().equals(currentUser.getId());
+
+        Usuario otroUsuario = currentUserIsRegular
+                ? conversation.getAdmin()
+                : conversation.getUsuario();
+
         return new ConversationDTO(
                 conversation.getId(),
                 conversation.getUsuario().getId(),
@@ -168,7 +271,9 @@ public class ChatService {
                 conversation.getFechaCreacion(),
                 conversation.getFechaUltimoMensaje(),
                 conversation.getEstado().name(),
-                0L // Se establece después
+                0L, // Se establece después con mensajesNoLeidos
+                otroUsuario.getId(), // ✅ ID del destinatario (con quien se conversa)
+                otroUsuario.getNombreCompleto() // ✅ Nombre a mostrar en la UI
         );
     }
 }

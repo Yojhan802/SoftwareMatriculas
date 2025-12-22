@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ChatMessageDTO {
+
     private Long id;
     private Long conversacionId;
     private Integer remitenteId;
@@ -19,4 +20,5 @@ public class ChatMessageDTO {
     private String contenidoCifrado;
     private LocalDateTime fechaEnvio;
     private Boolean leido;
+    private Boolean cifrado; // ✅ Campo agregado para indicar si está cifrado
 }

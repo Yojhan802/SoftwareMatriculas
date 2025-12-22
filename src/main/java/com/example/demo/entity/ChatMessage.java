@@ -12,32 +12,38 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Data
 @Entity
-@Table(name = "mensajes_chat")
+@Table(name = "chat_messages")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChatMessage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "mensaje_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "conversacion_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id", nullable = false)
     private Conversation conversation;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "remitente_id", nullable = false)
     private Usuario remitente;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "destinatario_id", nullable = false)
     private Usuario destinatario;
 
-    @Column(name = "contenido_cifrado", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "contenido_cifrado", columnDefinition = "TEXT", nullable = false)
     private String contenidoCifrado;
+
+    @Column(name = "cifrado", nullable = false)
+    private Boolean cifrado = true; // ✅ Por defecto true
 
     @Column(name = "fecha_envio", nullable = false)
     private LocalDateTime fechaEnvio;
@@ -50,6 +56,14 @@ public class ChatMessage {
 
     @PrePersist
     protected void onCreate() {
-        fechaEnvio = LocalDateTime.now();
+        if (fechaEnvio == null) {
+            fechaEnvio = LocalDateTime.now();
+        }
+        if (cifrado == null) {
+            cifrado = true;
+        }
+        if (leido == null) {
+            leido = false;
+        }
     }
 }

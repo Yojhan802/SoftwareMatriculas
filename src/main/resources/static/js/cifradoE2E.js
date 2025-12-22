@@ -1,14 +1,16 @@
-// chat-encryption.js - Manejo de cifrado E2E con RSA
+// cifradoE2E.js - Manejo de cifrado E2E con RSA
 
 class ChatEncryption {
     constructor() {
         this.keyPair = null;
         this.publicKeysCache = new Map();
+        console.log("🔐 ChatEncryption inicializado");
     }
 
     // Generar par de llaves RSA (público/privado)
     async generateKeyPair() {
         try {
+            console.log("🔑 Generando par de llaves RSA...");
             this.keyPair = await window.crypto.subtle.generateKey(
                 {
                     name: "RSA-OAEP",
@@ -106,13 +108,33 @@ class ChatEncryption {
 
     // Descifrar mensaje con nuestra clave privada
     async decryptMessage(encryptedBase64) {
+    try {
+        console.log("🔓 Intentando descifrar mensaje...");
+        
+        if (!this.keyPair || !this.keyPair.privateKey) {
+            console.error("❌ No hay clave privada disponible");
+            throw new Error("No hay clave privada disponible");
+        }
+
+        console.log("📏 Longitud del mensaje cifrado (base64):", encryptedBase64.length);
+        console.log("📝 Primeros 50 chars:", encryptedBase64.substring(0, 50));
+        
+        // Verificar que el mensaje no esté vacío
+        if (!encryptedBase64 || encryptedBase64.trim() === "") {
+            console.error("❌ Mensaje cifrado vacío");
+            return "[Mensaje vacío]";
+        }
+
+        // Verificar que sea base64 válido
         try {
-            if (!this.keyPair || !this.keyPair.privateKey) {
-                throw new Error("No hay clave privada disponible");
-            }
-
             const encrypted = this.base64ToArrayBuffer(encryptedBase64);
-
+            console.log("📦 Tamaño del buffer descifrado:", encrypted.byteLength, "bytes");
+            
+            // RSA-OAEP tiene un límite de tamaño para lo que puede descifrar
+            if (encrypted.byteLength > 256) { // 2048-bit RSA = 256 bytes
+                console.warn("⚠️ El mensaje cifrado es demasiado grande para RSA. ¿Está realmente cifrado con RSA?");
+            }
+            
             const decrypted = await window.crypto.subtle.decrypt(
                 {
                     name: "RSA-OAEP"
@@ -122,12 +144,36 @@ class ChatEncryption {
             );
 
             const decoder = new TextDecoder();
-            return decoder.decode(decrypted);
-        } catch (error) {
-            console.error("❌ Error descifrando mensaje:", error);
-            return "[Error: No se pudo descifrar el mensaje]";
+            const result = decoder.decode(decrypted);
+            
+            console.log("✅ Mensaje descifrado exitosamente:", result.substring(0, 100));
+            return result;
+            
+        } catch (base64Error) {
+            console.error("❌ Error en base64 o descifrado:", base64Error);
+            
+            // Si falla el descifrado, podría ser texto plano
+            // Verificar si parece ser texto plano
+            if (encryptedBase64.length < 500 && 
+                !encryptedBase64.includes('/') && 
+                !encryptedBase64.includes('+') && 
+                !encryptedBase64.includes('=')) {
+                console.log("📝 Parece ser texto plano, retornando tal cual");
+                return encryptedBase64;
+            }
+            
+            return "[Error: No se pudo descifrar - formato inválido]";
         }
+        
+    } catch (error) {
+        console.error("❌ Error crítico en decryptMessage:", error);
+        console.error("🔍 Tipo de error:", error.name);
+        console.error("📋 Mensaje:", error.message);
+        console.error("📚 Stack:", error.stack);
+        
+        return "[Error: No se pudo descifrar el mensaje - " + error.message + "]";
     }
+}
 
     // Guardar claves en localStorage (SOLO para desarrollo - en producción usar IndexedDB)
     async saveKeysToStorage() {
@@ -151,6 +197,7 @@ class ChatEncryption {
             const privateKeyPem = localStorage.getItem('chat_private_key');
 
             if (!publicKeyPem || !privateKeyPem) {
+                console.log("⚠️ No hay llaves guardadas en localStorage");
                 return false;
             }
 
@@ -185,6 +232,7 @@ class ChatEncryption {
         }
     }
 
+    
     // Importar clave privada
     async importPrivateKey(pemKey) {
         try {
@@ -231,7 +279,26 @@ class ChatEncryption {
         }
         return bytes.buffer;
     }
+
+    // Método para verificar si las llaves están disponibles
+    hasKeys() {
+        return this.keyPair !== null && 
+               this.keyPair.publicKey !== null && 
+               this.keyPair.privateKey !== null;
+    }
+
+    // Método para limpiar llaves (para logout)
+    clearKeys() {
+        this.keyPair = null;
+        this.publicKeysCache.clear();
+        localStorage.removeItem('chat_public_key');
+        localStorage.removeItem('chat_private_key');
+        console.log("🧹 Llaves limpiadas");
+    }
 }
 
-// Instancia global
-const chatEncryption = new ChatEncryption();
+// Instancia global - exponer en window para que esté disponible
+window.chatEncryption = new ChatEncryption();
+const chatEncryption = window.chatEncryption;
+
+console.log("✅ cifradoE2E.js cargado - chatEncryption disponible globalmente");

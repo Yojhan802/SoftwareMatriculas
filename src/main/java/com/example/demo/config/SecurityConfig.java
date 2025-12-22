@@ -44,36 +44,36 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints públicos
-                        .requestMatchers(
-                                "/index.html",
-                                "/login.html",
-                                "/api/users/login",
-                                "/api/users/register",
-                                "/api/users/me",
-                                "/ws-chat/**"  // NUEVO: WebSocket endpoint
-                        ).permitAll()
-                        // Endpoints de chat - requieren autenticación
-                        .requestMatchers("/api/chat/**").authenticated()  // NUEVO
-                        // Ejemplo de acceso por roles
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
-                        .requestMatchers("/api/director/**").hasAnyRole("DIRECTOR", "ADMIN")
-                        .requestMatchers("/api/2fa/**", "/api/reportes/**").hasRole("DIRECTOR")
-                        .requestMatchers("/api/anulacion/**").permitAll()
-                        // Cualquier otra request necesita estar logueado
-                        .anyRequest().authenticated()
+                // Endpoints públicos
+                .requestMatchers(
+                        "/index.html",
+                        "/login.html",
+                        "/api/users/login",
+                        "/api/users/register",
+                        "/api/users/me",
+                        "/ws/**" // NUEVO: WebSocket endpoint
+                ).permitAll()
+                // Endpoints de chat - requieren autenticación
+                .requestMatchers("/api/chat/**").authenticated() // NUEVO
+                // Ejemplo de acceso por roles
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
+                .requestMatchers("/api/director/**").hasAnyRole("DIRECTOR", "ADMIN")
+                .requestMatchers("/api/2fa/**", "/api/reportes/**").hasRole("DIRECTOR")
+                .requestMatchers("/api/anulacion/**").permitAll()
+                // Cualquier otra request necesita estar logueado
+                .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
-                        .loginPage("/index.html")
-                        .loginProcessingUrl("/api/users/login")
-                        .defaultSuccessUrl("/principal.html", true)
-                        .permitAll()
+                .loginPage("/index.html")
+                .loginProcessingUrl("/api/users/login")
+                .defaultSuccessUrl("/principal.html", true)
+                .permitAll()
                 )
                 .logout(logout -> logout
-                        .logoutUrl("/api/users/logout")
-                        .logoutSuccessUrl("/index.html")
-                        .permitAll()
+                .logoutUrl("/api/users/logout")
+                .logoutSuccessUrl("/index.html")
+                .permitAll()
                 );
 
         return http.build();

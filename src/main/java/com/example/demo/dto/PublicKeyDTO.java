@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PublicKeyDTO {
+
     private Integer usuarioId;
     private String clavePublica;
 }
