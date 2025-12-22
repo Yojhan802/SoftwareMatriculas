@@ -36,6 +36,25 @@ function initAlumnos() {
       }
     });
   }
+  // ⭐ NUEVO: Validación de solo letras en Nombre
+  const nombreInput = document.getElementById("nombre");
+  if (nombreInput) {
+    nombreInput.addEventListener("input", function (e) {
+      // Permitir solo letras, espacios, tildes y ñ
+      this.value = this.value.replace(/[^a-záéíóúñü\s]/gi, "");
+      this.classList.remove("is-invalid");
+    });
+  }
+
+  // ⭐ NUEVO: Validación de solo letras en Apellido
+  const apellidoInput = document.getElementById("apellido");
+  if (apellidoInput) {
+    apellidoInput.addEventListener("input", function (e) {
+      // Permitir solo letras, espacios, tildes y ñ
+      this.value = this.value.replace(/[^a-záéíóúñü\s]/gi, "");
+      this.classList.remove("is-invalid");
+    });
+  }
 }
 
 document.addEventListener("vista-cargada", (e) => {
@@ -490,6 +509,21 @@ async function guardarAlumno() {
       "Por favor complete todos los campos obligatorios",
       "warning"
     );
+    return;
+  }
+  // ⭐ NUEVO: Validar que nombre solo contenga letras
+  if (!/^[a-záéíóúñü\s]+$/i.test(nombre)) {
+    mostrarAlerta("El nombre solo puede contener letras", "danger");
+    document.getElementById("nombre").classList.add("is-invalid");
+    document.getElementById("nombre").focus();
+    return;
+  }
+
+  // ⭐ NUEVO: Validar que apellido solo contenga letras
+  if (!/^[a-záéíóúñü\s]+$/i.test(apellido)) {
+    mostrarAlerta("El apellido solo puede contener letras", "danger");
+    document.getElementById("apellido").classList.add("is-invalid");
+    document.getElementById("apellido").focus();
     return;
   }
 
