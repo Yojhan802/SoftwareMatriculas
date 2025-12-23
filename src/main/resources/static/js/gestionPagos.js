@@ -39,16 +39,17 @@ async function buscarDeudas() {
 }
 
 // ---------------- TABLA ----------------
+// ... (resto del código igual)
+
 function renderizarTablaCuotas() {
   const body = document.getElementById("tablaCuotasBody");
   const mensajeEstado = document.getElementById('mensajeEstado');
   body.innerHTML = "";
 
-  // LÓGICA SOLICITADA: Si no hay cuotas (por anulación o falta de deuda)
   if (!cuotasActuales || cuotasActuales.length === 0) {
     body.innerHTML = `
       <tr>
-        <td colspan="5" style="text-align: center; color: #dc3545; padding: 30px; font-weight: bold;">
+        <td colspan="6" style="text-align: center; color: #dc3545; padding: 30px; font-weight: bold;">
           🚫 NO TIENE CUOTAS PENDIENTES
         </td>
       </tr>`;
@@ -57,25 +58,33 @@ function renderizarTablaCuotas() {
   }
 
   cuotasActuales.forEach((c) => {
-    // Si la cuota ya está PAGADA en el historial, no mostramos checkbox
-    const checkbox = c.estado === 'PAGADO'
+    const esPagado = c.estado === 'PAGADO';
+
+    // 1. Checkbox o Badge de Pagado
+    const controlAccion = esPagado
       ? '<span class="status-badge badge-pagado">PAGADO</span>'
       : `<input type="checkbox" class="chk-pago"
            data-id_cuota="${c.idCuota}"
            data-monto="${c.monto}"
            onchange="calcularTotalYValidacion()">`;
 
+    // 2. Texto del Recibo (Solo si existe y está pagado)
+    const reciboHTML = esPagado && c.numeroRecibo
+      ? `<span class="text-recibo">#${c.numeroRecibo}</span>`
+      : '<span style="color: #ccc">—</span>';
+
     body.innerHTML += `
       <tr>
-        <td style="text-align:center">${checkbox}</td>
+        <td style="text-align:center">${controlAccion}</td>
         <td>${c.descripcion}</td>
         <td>S/ ${c.monto.toFixed(2)}</td>
         <td>${c.fechaVencimiento ?? '-'}</td>
         <td>
-            <span class="status-badge ${c.estado === 'PAGADO' ? 'badge-pagado' : 'badge-debe'}">
+            <span class="status-badge ${esPagado ? 'badge-pagado' : 'badge-debe'}">
                 ${c.estado}
             </span>
         </td>
+        <td style="font-weight: bold; color: #0d6efd;">${reciboHTML}</td>
       </tr>
     `;
   });

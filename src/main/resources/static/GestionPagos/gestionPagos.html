@@ -155,6 +155,23 @@
   .hidden {
     display: none !important;
   }
+
+  .text-recibo {
+    background-color: #e9ecef;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    display: inline-block; /* Para que el padding funcione bien */
+  }
+
+  /* Ajuste para que la tabla no se rompa */
+  .table-custom td {
+    text-align: left;
+  }
+
 </style>
 
 <style>
@@ -181,28 +198,26 @@
     </button>
   </div>
 
-  <div id="mensajeEstado"></div> </div>
-
-  <!-- TABLA CUOTAS -->
+  <div id="mensajeEstado"></div>
   <h3>Cuotas Pendientes</h3>
   <table class="table-custom">
-    <thead>
-      <tr>
-        <th style="width: 50px; text-align: center">Sel.</th>
-        <th>Concepto</th>
-        <th>Monto</th>
-        <th>Vencimiento</th>
-        <th>Estado</th>
-      </tr>
-    </thead>
-    <tbody id="tablaCuotasBody">
-      <tr>
-        <td colspan="5" style="text-align: center; color: #888; padding: 30px">
-          Ingrese un alumno para ver sus cuotas.
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <thead>
+  <tr>
+    <th style="width: 80px; text-align: center">Acción</th>
+    <th>Concepto</th>
+    <th>Monto</th>
+    <th>Vencimiento</th>
+    <th>Estado</th>
+    <th>N° Recibo</th> </tr>
+  </thead>
+  <tbody id="tablaCuotasBody">
+  <tr>
+    <td colspan="6" style="text-align: center; color: #888; padding: 30px">
+      Ingrese un alumno para ver sus cuotas.
+    </td>
+  </tr>
+  </tbody>
+</table>
 
   <!-- TOTAL -->
   <div

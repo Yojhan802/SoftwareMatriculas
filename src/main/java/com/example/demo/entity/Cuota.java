@@ -50,4 +50,7 @@ public class Cuota {
     @Column(name = "anio", nullable = false, length = 10)
     private String anio;
 
+    @Column(name = "numero_recibo", length = 20, nullable = true)
+    private String numeroRecibo;
+
 }

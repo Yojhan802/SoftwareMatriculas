@@ -76,10 +76,12 @@ public class PagoServiceImpl implements PagoService {
             recibo.setMontoTotal(cuota.getMonto());
             recibo.setMetodoPago(pagoDto.getMetodoPago());
             recibo.setAnulado(false);
+            String nuevoCodigo = generarCodigoRecibo(recibo.getSerie()); // Generamos el código
+            recibo.setNumeroRecibo(nuevoCodigo);
 
             // F. Actualizar estado Cuota
             cuota.setEstado(EstadoCuota.PAGADO);
-
+            cuota.setNumeroRecibo(nuevoCodigo);
             // G. Guardar en BD
             cuotaRepo.save(cuota);   // Actualiza a PAGADO inmediatamente
             Recibo guardado = reciboRepo.save(recibo);
@@ -122,8 +124,9 @@ public class PagoServiceImpl implements PagoService {
         }
 
         recibo.setAnulado(true);
+        Cuota cuota = recibo.getCuota();
         recibo.getCuota().setEstado(EstadoCuota.DEBE); // La cuota vuelve a deberse
-
+        cuota.setNumeroRecibo(null);
         reciboRepo.save(recibo);
         cuotaRepo.save(recibo.getCuota());
     }
