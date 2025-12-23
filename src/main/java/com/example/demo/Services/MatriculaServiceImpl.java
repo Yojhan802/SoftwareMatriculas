@@ -183,9 +183,11 @@ public class MatriculaServiceImpl implements MatriculaService {
     @Override
     @Transactional
     public void eliminarMatricula(int id) {
+        // 1. Buscamos la matrícula
         Matricula m = matriculaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Matricula no encontrada"));
 
+        // 2. Verificamos si tiene pagos para decidir si borramos o anulamos lógicamente
         boolean tienePagos = false;
         if (m.getCuotas() != null) {
             tienePagos = m.getCuotas().stream()
@@ -193,15 +195,17 @@ public class MatriculaServiceImpl implements MatriculaService {
         }
 
         if (!tienePagos) {
+            // CASO A: Sin pagos -> Borramos todo de la base de datos
             matriculaRepository.delete(m);
         } else {
-            // CAMBIO: La matrícula pasa a ANULADO
-            m.setEstado("ANULADO");
+            // CASO B: Con pagos -> Anulación total
+            m.setEstado("ANULADO"); // Marcamos la matrícula como anulada
 
-            // CAMBIO CRÍTICO: Anulamos TODAS las cuotas, sin importar si estaban pagadas o no.
-            // Esto garantiza que el repositorio no las encuentre al buscar deudas o historial.
+            // REGLA DE ORO: Si la matrícula no sirve, sus cuotas tampoco.
+            // Anulamos TODAS las cuotas para que el buscador ya no las devuelva.
             if (m.getCuotas() != null) {
                 for (Cuota c : m.getCuotas()) {
+                    // Forzamos el estado ANULADO en todas (incluso las pagadas si quieres limpiar todo)
                     c.setEstado(EstadoCuota.ANULADO);
                 }
             }

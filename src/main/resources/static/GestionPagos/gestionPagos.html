@@ -170,10 +170,11 @@
             type="text"
             id="inputBuscarAlumno"
             class="form-control-custom"
-            placeholder="Buscar por DNI, Nombre o Apellido..."
+            placeholder="Ingrese DNI (8 dígitos)"
             autocomplete="off"
+            maxlength="8"
             onkeypress="if(event.key === 'Enter') buscarDeudas()"
-            oninput="this.value = this.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ ]/g, '')"
+            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
     />
     <button class="btn-custom btn-secondary-custom" onclick="buscarDeudas()">
       🔍 Buscar
