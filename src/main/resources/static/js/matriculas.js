@@ -9,8 +9,8 @@ let matriculaPayload = {};
 
 // Listas de Grados constantes
 const GRADOS_PRIMARIA = [
-    "Primer Grado", "Segundo Grado", "Tercer Grado", 
-    "Cuarto Grado", "Quinto Grado", "Sexto Grado"
+    "Primer Año", "Segundo Año", "Tercer Año", 
+    "Cuarto Año", "Quinto Año", "Sexto Año"
 ];
 const GRADOS_SECUNDARIA = [
     "Primer Año", "Segundo Año", "Tercer Año", 
@@ -119,7 +119,7 @@ function cancelarMatricula() {
 async function verificarEstadoMatricula(idAlumno) {
     // URL: GET /api/matricula (Ya existe en tu controlador)
     const url = API_MATRICULA; 
-    const anioActual = '2025'; 
+    const anioActual = '2026'; 
 
     try {
         const response = await fetch(url);

@@ -88,7 +88,7 @@ public class AnulacionServiceImpl implements AnulacionService {
 
             // IMPORTANTE: Cambiamos a ANULADO.
             // Ya NO usamos 'DEBE' porque no queremos que se vuelva a pagar.
-            cuota.setEstado(EstadoCuota.ANULADO);
+            cuota.setEstado(EstadoCuota.DEBE);
 
             cuotaRepository.save(cuota);
         }

@@ -205,9 +205,9 @@ public class MatriculaServiceImpl implements MatriculaService {
             // Anulamos TODAS las cuotas para que el buscador ya no las devuelva.
             if (m.getCuotas() != null) {
                 for (Cuota c : m.getCuotas()) {
-                    // Forzamos el estado ANULADO en todas (incluso las pagadas si quieres limpiar todo)
+                    if(c.getEstado() == EstadoCuota.DEBE){
                     c.setEstado(EstadoCuota.ANULADO);
-                }
+                }}
             }
             matriculaRepository.save(m);
         }
