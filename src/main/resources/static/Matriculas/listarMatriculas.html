@@ -1,144 +1,268 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-    /* --- ESTILOS PROFESIONALES PERSONALIZADOS --- */
-    .card-header-gradient {
-        background: linear-gradient(45deg, #4e73df 0%, #224abe 100%);
-        color: white;
-    }
-    
-    .table-responsive {
-        border-radius: 8px;
-        overflow: hidden;
+    /* ============================================
+       DEFINICIÓN DE VARIABLES TESLA (Scope Local)
+       (Para asegurar consistencia visual)
+       ============================================ */
+    :root {
+        --tesla-navy: #1a2332;
+        --tesla-dark-blue: #0f1823;
+        --tesla-sky-blue: #4fc3f7;
+        --tesla-cyan: #00bcd4;
+        --tesla-white: #ffffff;
+        --tesla-light-gray: #f5f7fa;
+        --tesla-success: #10b981;
+        --tesla-danger: #ef4444;
+        --tesla-warning: #f59e0b;
+        --tesla-gradient-primary: linear-gradient(135deg, #1a2332 0%, #0f1823 100%);
+        --tesla-gradient-accent: linear-gradient(135deg, #4fc3f7 0%, #00bcd4 100%);
+        --tesla-shadow-sm: 0 2px 4px rgba(15, 24, 35, 0.1);
+        --tesla-shadow-md: 0 4px 12px rgba(15, 24, 35, 0.15);
+        --tesla-shadow-glow: 0 0 15px rgba(79, 195, 247, 0.3);
     }
 
-    /* Estilo de la tabla */
+    /* ============================================
+       ESTRUCTURA Y TARJETAS
+       ============================================ */
+    .tesla-card {
+        background: var(--tesla-white);
+        border-radius: 12px;
+        border: none;
+        box-shadow: var(--tesla-shadow-sm);
+        border-top: 4px solid var(--tesla-cyan);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .tesla-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--tesla-shadow-md);
+    }
+
+    .page-header-title {
+        color: var(--tesla-navy);
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    /* ============================================
+       TABLA ESTILO TESLA
+       ============================================ */
+    .table-container {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #eef2f7;
+    }
+
     #tablaMatriculas thead th {
-        background-color: #2c3e50;
-        color: #ffffff;
+        background: var(--tesla-gradient-primary);
+        color: var(--tesla-white);
         text-transform: uppercase;
         font-size: 0.85rem;
-        letter-spacing: 0.05em;
+        letter-spacing: 1px;
         border: none;
-        padding: 15px;
+        padding: 16px;
+        font-weight: 600;
         vertical-align: middle;
     }
 
     #tablaMatriculas tbody tr {
         transition: all 0.2s ease-in-out;
+        border-bottom: 1px solid #eef2f7;
     }
 
     #tablaMatriculas tbody tr:hover {
-        background-color: #f8f9fc;
-        transform: scale(1.005);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        z-index: 10;
+        background-color: rgba(79, 195, 247, 0.08) !important;
+        transform: scale(1.002);
+        z-index: 5;
         position: relative;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
 
     #tablaMatriculas td {
         vertical-align: middle;
-        font-size: 0.95rem;
-        color: #5a5c69;
-        border-color: #e3e6f0;
-        padding: 12px;
+        font-size: 0.9rem;
+        color: var(--tesla-navy);
+        padding: 14px;
+        font-weight: 500;
     }
 
-    /* Estilos para los badges de estado (generados por JS) */
-    .badge {
-        padding: 0.5em 0.8em;
+    /* ============================================
+       CONTROLES DE FORMULARIO (Inputs y Selects)
+       ============================================ */
+    .form-control-tesla, .form-select-tesla {
+        border-radius: 8px;
+        border: 1px solid #e0e6ed;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+        color: var(--tesla-navy);
+    }
+
+    .form-control-tesla:focus, .form-select-tesla:focus {
+        border-color: var(--tesla-sky-blue);
+        box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+        outline: none;
+    }
+
+    /* Input Group Personalizado */
+    .input-group-text-tesla {
+        background-color: #fff;
+        border: 1px solid #e0e6ed;
+        border-right: none;
+        color: var(--tesla-cyan);
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+    
+    /* ============================================
+       BOTONES
+       ============================================ */
+    /* Botón Principal (Nueva Matrícula) */
+    .btn-tesla-main {
+        background: var(--tesla-gradient-accent);
+        border: none;
+        color: white;
         font-weight: 600;
-        border-radius: 30px;
+        border-radius: 8px;
+        box-shadow: var(--tesla-shadow-sm);
+        transition: all 0.3s ease;
     }
 
-    /* Buscador visual */
-    .search-input {
+    .btn-tesla-main:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--tesla-shadow-glow);
+        color: white;
+        background: linear-gradient(135deg, #00bcd4 0%, #4fc3f7 100%);
+    }
+
+    /* ============================================
+       OVERRIDE: ESTILOS PARA ELEMENTOS GENERADOS POR JS
+       (Badges y Botones de la tabla)
+       ============================================ */
+    
+    /* 1. Badges de Estado (.badge generado por JS) */
+    .badge {
+        padding: 6px 12px;
         border-radius: 20px;
-        border: 1px solid #d1d3e2;
-        padding-left: 20px;
-        transition: border-color 0.3s;
-    }
-    .search-input:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+        font-weight: 700;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
     }
 
-    /* --- REGLA PARA OCULTAR BOTÓN EDITAR --- */
-    /* Como el botón se genera en JS, usamos CSS para ocultarlo visualmente */
-    /* Opción A: Oculta cualquier botón que tenga el icono de lápiz/editar */
-    #tablaMatriculas tbody td button:has(.fa-edit),
+    /* Activo (Success) */
+    .badge.bg-success {
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        color: var(--tesla-success) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Inactivo/Error (Danger) */
+    .badge.bg-danger {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        color: var(--tesla-danger) !important;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Anulado (Secondary) */
+    .badge.bg-secondary {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        border: 1px solid #cbd5e1;
+    }
+
+    /* 2. Botones de Acción (.btn-outline-primary generado por JS) */
+    .btn-outline-primary {
+        color: var(--tesla-cyan);
+        border-color: var(--tesla-cyan);
+        border-radius: 6px;
+    }
+
+    .btn-outline-primary:hover {
+        background: var(--tesla-gradient-accent) !important;
+        border-color: transparent !important;
+        color: white !important;
+        box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
+    }
+
+    /* 3. Botones de Eliminar (.btn-outline-danger generado por JS) */
+    .btn-outline-danger {
+        color: var(--tesla-danger);
+        border-color: var(--tesla-danger);
+        border-radius: 6px;
+    }
+
+    .btn-outline-danger:hover {
+        background-color: var(--tesla-danger) !important;
+        color: white !important;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+    }
+
+    /* Ocultar iconos antiguos si es necesario, mantenido de tu código */
     #tablaMatriculas tbody td button:has(.fa-pen),
-    #tablaMatriculas tbody td a:has(.fa-edit),
-    #tablaMatriculas tbody td a:has(.fa-pen) {
-        display: none !important;
-    }
-
-    /* Opción B (Respaldo para navegadores antiguos): Oculta solo el icono */
-    #tablaMatriculas .fa-edit, 
-    #tablaMatriculas .fa-pen,
     #tablaMatriculas .fa-pencil-alt {
         display: none !important;
     }
 </style>
 
-<div class="container-fluid animate__animated animate__fadeIn">
+<div class="container-fluid animate__animated animate__fadeIn p-4">
     
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <div>
-            <h1 class="h3 mb-0 text-gray-800 fw-bold">
-                <i class="fas fa-list-alt text-primary me-2"></i>Gestión de Matrículas
+            <h1 class="h3 mb-1 page-header-title">
+                <i class="fas fa-list-alt me-2" style="color: var(--tesla-cyan);"></i>Gestión de Matrículas
             </h1>
-            <p class="text-muted mb-0 small">Visualice y administre el historial académico.</p>
+            <p class="text-muted mb-0 small" style="border-left: 3px solid var(--tesla-cyan); padding-left: 10px;">
+                Visualice y administre el historial académico de los alumnos.
+            </p>
         </div>
-        <button class="btn btn-primary btn-lg shadow-sm rounded-pill px-4" onclick="loadViewOriginal('Matriculas/matriculas.html')">
-            <i class="fas fa-plus me-2"></i> Nueva Matrícula
+        <button class="btn btn-tesla-main btn-lg px-4 py-2" onclick="loadViewOriginal('Matriculas/matriculas.html')">
+            <i class="fas fa-plus-circle me-2"></i> Nueva Matrícula
         </button>
     </div>
 
-    <div class="card shadow-lg border-0 mb-4 rounded-3">
+    <div class="card tesla-card mb-4">
         
-        <div class="card-header card-header-gradient py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold">
-                <i class="fas fa-table me-1"></i> Registros Actuales
-            </h6>
-        </div>
-
-        <div class="card-body bg-white">
+        <div class="card-body p-4">
             
-            <div class="row mb-3 align-items-center g-2">
+            <div class="row mb-4 align-items-end g-3">
                 
-                <div class="col-md-3 col-sm-12 text-muted small">
-                    Mostrar 
-                    <select class="form-select form-select-sm d-inline-block w-auto border-light bg-light" id="elementosPorPagina" onchange="aplicarFiltrosLocales()">
-                        <option value="10">10</option>
-                        <option value="25">25</option>
-                        <option value="50">50</option>
+                <div class="col-md-2 col-sm-12">
+                    <label class="small text-muted fw-bold mb-1">Mostrar</label>
+                    <select class="form-select form-select-tesla" id="elementosPorPagina" onchange="aplicarFiltrosLocales()">
+                        <option value="10">10 registros</option>
+                        <option value="25">25 registros</option>
+                        <option value="50">50 registros</option>
                     </select>
-                    
                 </div>
 
                 <div class="col-md-3 col-sm-12">
-                    <select class="form-select form-select-sm border-secondary" id="filtroEstadoMatricula" onchange="aplicarFiltrosLocales()">
+                    <label class="small text-muted fw-bold mb-1">Estado</label>
+                    <select class="form-select form-select-tesla" id="filtroEstadoMatricula" onchange="aplicarFiltrosLocales()">
                         <option value="TODOS">Todos los Estados</option>
-                        <option value="ACTIVO" selected>Solo Activos</option>
-                        <option value="ANULADO">Solo Anulados</option>
+                        <option value="ACTIVO" selected>🔵 Solo Activos</option>
+                        <option value="ANULADO">⚪ Solo Anulados</option>
                     </select>
                 </div>
 
-                <div class="col-md-6 col-sm-12">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-gray-400"></i></span>
-                        <input type="text" class="form-control border-start-0 search-input ps-0" 
+                <div class="col-md-7 col-sm-12">
+                    <label class="small text-muted fw-bold mb-1">Búsqueda Inteligente</label>
+                    <div class="input-group">
+                        <span class="input-group-text input-group-text-tesla">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control form-control-tesla border-start-0 ps-2" 
                                id="inputBusquedaMatricula" 
-                               placeholder="Buscar por alumno, DNI..." 
+                               placeholder="Buscar por nombre de alumno, apellido o DNI..." 
                                onkeyup="aplicarFiltrosLocales()">
                     </div>
                 </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="table table-hover mb-0" id="tablaMatriculas" width="100%" cellspacing="0">
+            <div class="table-container">
+                <table class="table mb-0" id="tablaMatriculas" width="100%" cellspacing="0">
                     <thead>
                         <tr>
                             <th style="width: 5%">ID</th>
@@ -156,10 +280,10 @@
                     <tbody id="cuerpoTablaMatriculas">
                         <tr>
                             <td colspan="10" class="text-center py-5">
-                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
-                                <p class="mt-3 text-gray-500 fw-bold">Sincronizando datos...</p>
+                                <p class="mt-3 text-muted fw-bold">Sincronizando datos...</p>
                             </td>
                         </tr>
                     </tbody>
@@ -168,7 +292,7 @@
 
             <div class="row mt-4 align-items-center">
                 <div class="col-md-5 text-muted small" id="infoRegistros">
-                    Mostrando registros del sistema
+                    <i class="fas fa-info-circle me-1 text-info"></i> Mostrando registros del sistema
                 </div>
                 <div class="col-md-7">
                     <nav aria-label="Page navigation">
@@ -183,7 +307,7 @@
 </div>
 
 <script>
-    // Iniciar script
+    // Iniciar script si la función global existe (para cargas dinámicas)
     if (typeof listarMatriculas === 'function') {
         listarMatriculas();
     }
