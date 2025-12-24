@@ -1,19 +1,362 @@
-<div class="payment-dashboard-card">
-  <h2>Configurar Google Authenticator</h2>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configurar Google Authenticator - I.E.P Nikola Tesla</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* ============================================
+         PALETA DE COLORES TESLA
+         ============================================ */
+      :root {
+        --tesla-navy: #1a2332;
+        --tesla-dark-blue: #0f1823;
+        --tesla-sky-blue: #4fc3f7;
+        --tesla-light-blue: #81d4fa;
+        --tesla-cyan: #00bcd4;
+        --tesla-white: #ffffff;
+        --tesla-light-gray: #f5f7fa;
+        --tesla-medium-gray: #e0e6ed;
+        --tesla-success: #10b981;
+        --tesla-warning: #f59e0b;
+        --tesla-danger: #ef4444;
+        --tesla-gradient-primary: linear-gradient(
+          135deg,
+          #1a2332 0%,
+          #0f1823 100%
+        );
+        --tesla-gradient-accent: linear-gradient(
+          135deg,
+          #4fc3f7 0%,
+          #00bcd4 100%
+        );
+        --tesla-shadow-sm: 0 2px 4px rgba(15, 24, 35, 0.1);
+        --tesla-shadow-md: 0 4px 12px rgba(15, 24, 35, 0.15);
+        --tesla-shadow-lg: 0 10px 25px rgba(15, 24, 35, 0.2);
+        --tesla-shadow-glow: 0 0 20px rgba(79, 195, 247, 0.3);
+      }
 
-  <input
-    type="text"
-    id="inputUsuario"
-    placeholder="Nombre de usuario (Director)"
-  />
-  <button onclick="generarQr()">Generar QR</button>
+      body {
+        background-color: transparent;
+        padding: 0;
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--tesla-dark-blue);
+      }
 
-  <div id="qrContainer" style="margin-top: 20px; display: none">
-    <p>Escanea este QR con Google Authenticator:</p>
-    <img id="qrImage" />
-    <p>
-      Clave secreta (guárdala por si pierdes el celular):
-      <span id="claveSecreta"></span>
-    </p>
-  </div>
-</div>
+      .container-fluid {
+        padding: 0;
+        max-width: 100%;
+      }
+
+      /* ============================================
+         PAYMENT DASHBOARD CARD
+         ============================================ */
+      .payment-dashboard-card {
+        background: var(--tesla-white);
+        border-radius: 12px;
+        padding: 2.5rem;
+        box-shadow: var(--tesla-shadow-md);
+        border-left: 5px solid var(--tesla-sky-blue);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        max-width: 700px;
+        margin: 0 auto;
+      }
+
+      .payment-dashboard-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: var(--tesla-gradient-accent);
+        opacity: 0.08;
+        border-radius: 0 0 0 100%;
+      }
+
+      .payment-dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--tesla-shadow-lg);
+      }
+
+      /* ============================================
+         HEADER
+         ============================================ */
+      .payment-dashboard-card h2 {
+        color: var(--tesla-dark-blue);
+        font-weight: 700;
+        font-size: 1.8rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        z-index: 1;
+      }
+
+      .payment-dashboard-card h2::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100px;
+        height: 4px;
+        background: var(--tesla-gradient-accent);
+        border-radius: 2px;
+      }
+
+      /* ============================================
+         INPUT
+         ============================================ */
+      .payment-dashboard-card input[type="text"] {
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid var(--tesla-medium-gray);
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--tesla-light-gray);
+        color: var(--tesla-dark-blue);
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .payment-dashboard-card input[type="text"]:focus {
+        outline: none;
+        border-color: var(--tesla-sky-blue);
+        box-shadow: 0 0 0 0.2rem rgba(79, 195, 247, 0.25);
+        background: var(--tesla-white);
+      }
+
+      .payment-dashboard-card input[type="text"]::placeholder {
+        color: #a0aec0;
+      }
+
+      /* ============================================
+         BUTTON
+         ============================================ */
+      .payment-dashboard-card button {
+        width: 100%;
+        background: var(--tesla-gradient-accent);
+        color: var(--tesla-white);
+        border: none;
+        padding: 1rem 2rem;
+        font-weight: 700;
+        font-size: 1.05rem;
+        border-radius: 10px;
+        box-shadow: var(--tesla-shadow-sm);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .payment-dashboard-card button:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--tesla-shadow-glow);
+        background: linear-gradient(135deg, #00bcd4 0%, #4fc3f7 100%);
+      }
+
+      .payment-dashboard-card button:active {
+        transform: translateY(-1px);
+      }
+
+      /* ============================================
+         QR CONTAINER
+         ============================================ */
+      #qrContainer {
+        margin-top: 2.5rem;
+        padding: 2rem;
+        background: var(--tesla-light-gray);
+        border-radius: 12px;
+        border: 2px solid var(--tesla-medium-gray);
+        text-align: center;
+        position: relative;
+        z-index: 1;
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      #qrContainer p {
+        color: var(--tesla-dark-blue);
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      /* ============================================
+         QR IMAGE CONTAINER
+         ============================================ */
+      .qr-image-wrapper {
+        display: inline-block;
+        padding: 1.5rem;
+        background: var(--tesla-white);
+        border-radius: 15px;
+        box-shadow: var(--tesla-shadow-md);
+        margin-bottom: 2rem;
+        border: 3px solid var(--tesla-sky-blue);
+      }
+
+      #qrImage {
+        max-width: 280px;
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 10px;
+      }
+
+      /* ============================================
+         SECRET KEY SECTION
+         ============================================ */
+      .secret-key-section {
+        background: var(--tesla-white);
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 5px solid var(--tesla-warning);
+        box-shadow: var(--tesla-shadow-sm);
+      }
+
+      .secret-key-section p {
+        color: var(--tesla-dark-blue);
+        font-size: 0.95rem;
+        margin-bottom: 1rem;
+        font-weight: 600;
+      }
+
+      #claveSecreta {
+        display: block;
+        background: var(--tesla-gradient-primary);
+        color: var(--tesla-sky-blue);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        font-family: "Courier New", monospace;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        word-break: break-all;
+        box-shadow: var(--tesla-shadow-sm);
+        border: 2px solid var(--tesla-sky-blue);
+        margin-top: 0.5rem;
+      }
+
+      /* ============================================
+         ANIMACIONES
+         ============================================ */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .payment-dashboard-card {
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      /* ============================================
+         RESPONSIVE
+         ============================================ */
+      @media (max-width: 768px) {
+        .payment-dashboard-card {
+          padding: 1.5rem;
+        }
+
+        .payment-dashboard-card h2 {
+          font-size: 1.4rem;
+        }
+
+        #qrImage {
+          max-width: 220px;
+        }
+
+        #claveSecreta {
+          font-size: 0.9rem;
+          padding: 0.8rem 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid p-4">
+      <div class="payment-dashboard-card">
+        <h2>Configurar Google Authenticator</h2>
+
+        <input
+          type="text"
+          id="inputUsuario"
+          placeholder="Nombre de usuario (Director)"
+        />
+        <button onclick="generarQr()">Generar QR</button>
+
+        <div id="qrContainer" style="display: none">
+          <p>Escanea este QR con Google Authenticator:</p>
+
+          <div class="qr-image-wrapper">
+            <img id="qrImage" alt="Código QR" />
+          </div>
+
+          <div class="secret-key-section">
+            <p>Clave secreta (guárdala por si pierdes el celular):</p>
+            <span id="claveSecreta"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      function generarQr() {
+        const usuario = document.getElementById("inputUsuario").value.trim();
+
+        if (!usuario) {
+          alert("Por favor ingrese un nombre de usuario");
+          document.getElementById("inputUsuario").focus();
+          return;
+        }
+
+        // Simulación de generación de QR
+        const claveSecreta = generarClaveSecreta();
+        const qrUrl = `https://chart.googleapis.com/chart?chs=280x280&cht=qr&chl=otpauth://totp/IEP-NikolaTesla:${encodeURIComponent(
+          usuario
+        )}?secret=${claveSecreta}&issuer=IEP-NikolaTesla`;
+
+        // Mostrar el contenedor
+        const qrContainer = document.getElementById("qrContainer");
+        qrContainer.style.display = "block";
+
+        // Actualizar imagen y clave
+        document.getElementById("qrImage").src = qrUrl;
+        document.getElementById("claveSecreta").textContent = claveSecreta;
+
+        // Scroll suave hacia el QR
+        setTimeout(() => {
+          qrContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+      }
+
+      function generarClaveSecreta() {
+        const caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        let clave = "";
+        for (let i = 0; i < 16; i++) {
+          clave += caracteres.charAt(
+            Math.floor(Math.random() * caracteres.length)
+          );
+        }
+        return clave;
+      }
+    </script>
+  </body>
+</html>
