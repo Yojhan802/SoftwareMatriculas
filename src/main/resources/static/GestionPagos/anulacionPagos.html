@@ -169,9 +169,10 @@
             type="text"
             id="inputBuscarRecibo"
             class="form-control-custom"
-            placeholder="Ingrese N° de Recibo (Letras, números y guiones)"
+            placeholder="Ingrese N° de Recibo (0-9 y -)"
+            maxlength="11"
             onkeypress="if(event.key==='Enter') buscarRecibo()"
-            oninput="this.value = this.value.replace(/[^a-zA-Z0-9-]/g, '')"
+            oninput="this.value = this.value.replace(/[^0-9-]/g, '')"
     />
     <button class="btn-custom btn-secondary-custom" onclick="buscarRecibo()">
       🔍 Buscar
