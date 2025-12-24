@@ -1,332 +1,368 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Pagos - Tesla Style</title>
-  <link
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-          rel="stylesheet"
-  />
-  <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
-  />
-  <style>
-    /* ============================================
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Pagos - Tesla Style</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <style>
+      /* ============================================
        VARIABLES (Heredadas de principal.html)
        ============================================ */
-    :root {
-      --tesla-navy: #1a2332;
-      --tesla-dark-blue: #0f1823;
-      --tesla-sky-blue: #4fc3f7;
-      --tesla-cyan: #00bcd4;
-      --tesla-white: #ffffff;
-      --tesla-light-gray: #f5f7fa;
-      --tesla-success: #10b981;
-      --tesla-warning: #f59e0b;
-      --tesla-danger: #ef4444;
-      --tesla-gradient-primary: linear-gradient(135deg, #1a2332 0%, #0f1823 100%);
-      --tesla-gradient-accent: linear-gradient(135deg, #4fc3f7 0%, #00bcd4 100%);
-      --tesla-shadow-sm: 0 2px 4px rgba(15, 24, 35, 0.1);
-      --tesla-shadow-md: 0 4px 12px rgba(15, 24, 35, 0.15);
-      --tesla-shadow-glow: 0 0 20px rgba(79, 195, 247, 0.3);
-    }
+      :root {
+        --tesla-navy: #1a2332;
+        --tesla-dark-blue: #0f1823;
+        --tesla-sky-blue: #4fc3f7;
+        --tesla-cyan: #00bcd4;
+        --tesla-white: #ffffff;
+        --tesla-light-gray: #f5f7fa;
+        --tesla-success: #10b981;
+        --tesla-warning: #f59e0b;
+        --tesla-danger: #ef4444;
+        --tesla-gradient-primary: linear-gradient(
+          135deg,
+          #1a2332 0%,
+          #0f1823 100%
+        );
+        --tesla-gradient-accent: linear-gradient(
+          135deg,
+          #4fc3f7 0%,
+          #00bcd4 100%
+        );
+        --tesla-shadow-sm: 0 2px 4px rgba(15, 24, 35, 0.1);
+        --tesla-shadow-md: 0 4px 12px rgba(15, 24, 35, 0.15);
+        --tesla-shadow-glow: 0 0 20px rgba(79, 195, 247, 0.3);
+      }
 
-    body {
-      background-color: transparent; /* Permite ver el fondo del principal */
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      padding-bottom: 50px; /* Espacio para el botón de chat flotante */
-    }
+      body {
+        background-color: transparent; /* Permite ver el fondo del principal */
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        /* Espacio para el botón de chat flotante */
+      }
 
-    /* ============================================
+      /* ============================================
        ESTILO DE TARJETAS (Mismo que Dashboard)
        ============================================ */
-    .dashboard-card {
-      background: var(--tesla-white);
-      border-radius: 12px;
-      padding: 25px;
-      box-shadow: var(--tesla-shadow-sm);
-      border: none;
-      border-left: 5px solid var(--tesla-sky-blue); /* Borde por defecto */
-      transition: all 0.3s ease;
-      margin-bottom: 20px;
-    }
+      .dashboard-card {
+        background: var(--tesla-white);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: var(--tesla-shadow-sm);
+        border: none;
+        border-left: 5px solid var(--tesla-sky-blue); /* Borde por defecto */
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+      }
 
-    .dashboard-card:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--tesla-shadow-md);
-    }
+      .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--tesla-shadow-md);
+      }
 
-    /* Título de sección */
-    .page-header {
-      margin-bottom: 1.5rem;
-    }
-    .page-header h2 {
-      color: var(--tesla-navy);
-      font-weight: 700;
-      margin: 0;
-    }
-    .page-header p {
-      color: #64748b;
-      margin: 0;
-    }
+      /* Título de sección */
+      .page-header {
+        margin-bottom: 1.5rem;
+      }
+      .page-header h2 {
+        color: var(--tesla-navy);
+        font-weight: 700;
+        margin: 0;
+      }
+      .page-header p {
+        color: #64748b;
+        margin: 0;
+      }
 
-    /* ============================================
+      /* ============================================
        FORMULARIOS E INPUTS
        ============================================ */
-    .form-label {
-      color: var(--tesla-navy);
-      font-weight: 600;
-    }
+      .form-label {
+        color: var(--tesla-navy);
+        font-weight: 600;
+      }
 
-    .form-control {
-      border: 2px solid #e0e6ed;
-      border-radius: 8px;
-      padding: 10px 15px;
-      transition: all 0.3s ease;
-    }
+      .form-control {
+        border: 2px solid #e0e6ed;
+        border-radius: 8px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+      }
 
-    .form-control:focus {
-      border-color: var(--tesla-sky-blue);
-      box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.1);
-    }
+      .form-control:focus {
+        border-color: var(--tesla-sky-blue);
+        box-shadow: 0 0 0 4px rgba(79, 195, 247, 0.1);
+      }
 
-    /* ============================================
+      /* ============================================
        TABLAS
        ============================================ */
-    .table-container {
-      border-radius: 10px;
-      overflow: hidden;
-    }
+      .table-container {
+        border-radius: 10px;
+        overflow: hidden;
+      }
 
-    .table thead {
-      background: var(--tesla-gradient-primary);
-      color: var(--tesla-white);
-    }
+      .table thead {
+        background: var(--tesla-gradient-primary);
+        color: var(--tesla-white);
+      }
 
-    .table thead th {
-      background: transparent;
-      color: white;
-      font-weight: 600;
-      border: none;
-      padding: 15px;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-      letter-spacing: 0.5px;
-    }
+      .table thead th {
+        background: transparent;
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 15px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+      }
 
-    .table tbody tr {
-      transition: background-color 0.2s;
-    }
+      .table tbody tr {
+        transition: background-color 0.2s;
+      }
 
-    .table tbody td {
-      padding: 15px;
-      vertical-align: middle;
-      color: var(--tesla-navy);
-      border-bottom: 1px solid #e0e6ed;
-    }
+      .table tbody td {
+        padding: 15px;
+        vertical-align: middle;
+        color: var(--tesla-navy);
+        border-bottom: 1px solid #e0e6ed;
+      }
 
-    .table-hover tbody tr:hover {
-      background-color: rgba(79, 195, 247, 0.05);
-    }
+      .table-hover tbody tr:hover {
+        background-color: rgba(79, 195, 247, 0.05);
+      }
 
-    .row-disabled {
-      background-color: #f8f9fa !important;
-      opacity: 0.6;
-      pointer-events: none;
-    }
+      .row-disabled {
+        background-color: #f8f9fa !important;
+        opacity: 0.6;
+        pointer-events: none;
+      }
 
-    /* ============================================
+      /* ============================================
        BADGES & ELEMENTOS UI
        ============================================ */
-    /* Badge Pagado (Verde Tesla) */
-    .badge-pagado {
-      background-color: rgba(16, 185, 129, 0.1);
-      color: var(--tesla-success);
-      padding: 6px 14px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 0.75rem;
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      display: inline-block;
-      text-transform: uppercase;
-    }
+      /* Badge Pagado (Verde Tesla) */
+      .badge-pagado {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--tesla-success);
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        display: inline-block;
+        text-transform: uppercase;
+      }
 
-    /* Badge Debe (Ámbar Tesla) */
-    .badge-debe {
-      background-color: rgba(245, 158, 11, 0.1);
-      color: var(--tesla-warning);
-      padding: 6px 14px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 0.75rem;
-      border: 1px solid rgba(245, 158, 11, 0.2);
-      display: inline-block;
-      text-transform: uppercase;
-    }
+      /* Badge Debe (Ámbar Tesla) */
+      .badge-debe {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--tesla-warning);
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        display: inline-block;
+        text-transform: uppercase;
+      }
 
-    /* N° Recibo */
-    .text-recibo {
-      background-color: var(--tesla-light-gray);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-family: "Consolas", monospace;
-      font-size: 0.85rem;
-      color: var(--tesla-navy);
-      border: 1px solid #d1d5db;
-      font-weight: 600;
-    }
+      /* N° Recibo */
+      .text-recibo {
+        background-color: var(--tesla-light-gray);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-family: "Consolas", monospace;
+        font-size: 0.85rem;
+        color: var(--tesla-navy);
+        border: 1px solid #d1d5db;
+        font-weight: 600;
+      }
 
-    /* Checkbox personalizado */
-    .chk-pago {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      accent-color: var(--tesla-cyan); /* Color nativo del navegador para checkbox */
-      margin-top: 5px;
-    }
+      /* Checkbox personalizado */
+      .chk-pago {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(
+          --tesla-cyan
+        ); /* Color nativo del navegador para checkbox */
+        margin-top: 5px;
+      }
 
-    /* ============================================
+      /* ============================================
        BOTONES & FOOTER
        ============================================ */
-    .btn-tesla-search {
-      background-color: var(--tesla-navy);
-      color: white;
-      border: none;
-      padding: 0 20px;
-      border-radius: 0 8px 8px 0; /* Unir con el input */
-      transition: all 0.3s;
-    }
-    .btn-tesla-search:hover {
-      background-color: var(--tesla-dark-blue);
-      color: var(--tesla-sky-blue);
-    }
+      .btn-tesla-search {
+        background-color: var(--tesla-navy);
+        color: white;
+        border: none;
+        padding: 0 20px;
+        border-radius: 0 8px 8px 0; /* Unir con el input */
+        transition: all 0.3s;
+      }
+      .btn-tesla-search:hover {
+        background-color: var(--tesla-dark-blue);
+        color: var(--tesla-sky-blue);
+      }
 
-    .btn-primary-tesla {
-      background: var(--tesla-gradient-accent);
-      border: none;
-      padding: 12px 30px;
-      font-weight: 700;
-      color: white;
-      border-radius: 8px;
-      box-shadow: var(--tesla-shadow-sm);
-      transition: all 0.3s ease;
-    }
+      .btn-primary-tesla {
+        background: var(--tesla-gradient-accent);
+        border: none;
+        padding: 12px 30px;
+        font-weight: 700;
+        color: white;
+        border-radius: 8px;
+        box-shadow: var(--tesla-shadow-sm);
+        transition: all 0.3s ease;
+      }
 
-    .btn-primary-tesla:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--tesla-shadow-glow);
-      background: linear-gradient(135deg, #00bcd4 0%, #4fc3f7 100%);
-      color: white;
-    }
+      .btn-primary-tesla:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--tesla-shadow-glow);
+        background: linear-gradient(135deg, #00bcd4 0%, #4fc3f7 100%);
+        color: white;
+      }
 
-    /* Texto de Total con gradiente */
-    .total-amount {
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: var(--tesla-gradient-accent);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+      /* Texto de Total con gradiente */
+      .total-amount {
+        font-size: 1.8rem;
+        font-weight: 800;
+        background: var(--tesla-gradient-accent);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
 
-    .total-label {
-      font-size: 1rem;
-      color: var(--tesla-navy);
-      font-weight: 600;
-      margin-right: 10px;
-    }
-  </style>
-</head>
-<body>
-<div class="container-fluid">
-
-  <div class="page-header d-flex align-items-center gap-3">
-    <div style="background: var(--tesla-gradient-accent); width: 5px; height: 40px; border-radius: 5px;"></div>
-    <div>
-      <h2>Gestión de Pagos</h2>
-      <p>Administración de deudas y cobranzas</p>
-    </div>
-  </div>
-
-  <div id="mensajeEstado"></div>
-
-  <div class="dashboard-card" style="border-left-color: var(--tesla-cyan);">
-    <div class="row align-items-end">
-      <div class="col-md-6">
-        <label class="form-label">
-          <i class="bi bi-search me-2"></i>Buscar Alumno por DNI
-        </label>
-        <div class="input-group">
-          <input
-                  type="text"
-                  id="inputBuscarAlumno"
-                  class="form-control"
-                  placeholder="Ingrese DNI (8 dígitos)"
-                  maxlength="8"
-                  onkeypress="if(event.key === 'Enter') buscarDeudas()"
-          />
-          <button class="btn btn-tesla-search" onclick="buscarDeudas()">
-            BUSCAR
-          </button>
+      .total-label {
+        font-size: 1rem;
+        color: var(--tesla-navy);
+        font-weight: 600;
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="page-header d-flex align-items-center gap-3">
+        <div
+          style="
+            background: var(--tesla-gradient-accent);
+            width: 5px;
+            height: 40px;
+            border-radius: 5px;
+          "
+        ></div>
+        <div>
+          <h2>Gestión de Pagos</h2>
+          <p>Administración de deudas y cobranzas</p>
         </div>
       </div>
-      <div class="col-md-6 text-end">
-        <small class="text-muted"><i class="bi bi-info-circle"></i> Ingrese el DNI para ver las deudas pendientes</small>
-      </div>
-    </div>
-  </div>
 
-  <div class="dashboard-card p-0 overflow-hidden" style="border-left: none;">
-    <div class="p-3" style="border-bottom: 2px solid var(--tesla-sky-blue);">
-      <h5 class="m-0" style="color: var(--tesla-navy); font-weight: 700;">
-        <i class="bi bi-list-check me-2" style="color: var(--tesla-cyan);"></i> Cuotas Pendientes
-      </h5>
-    </div>
+      <div id="mensajeEstado"></div>
 
-    <div class="card-body p-0">
-      <div class="table-container">
-        <table class="table table-hover mb-0">
-          <thead>
-          <tr>
-            <th style="width: 100px; text-align: center">Acción</th>
-            <th>Concepto</th>
-            <th>Monto</th>
-            <th>Vencimiento</th>
-            <th>Estado</th>
-            <th>N° Recibo</th>
-          </tr>
-          </thead>
-          <tbody id="tablaCuotasBody">
-          <tr>
-            <td colspan="6" class="text-center py-5">
-              <div style="opacity: 0.3;">
-                <i class="bi bi-wallet2" style="font-size: 4rem; color: var(--tesla-navy);"></i>
-              </div>
-              <p class="text-muted mt-3 fw-semibold">Ingrese un DNI y presione buscar para cargar los datos.</p>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="p-4" style="background-color: var(--tesla-light-gray); border-top: 1px solid #e0e6ed;">
-      <div class="d-flex justify-content-end align-items-center gap-4">
-        <div class="d-flex align-items-center">
-          <span class="total-label">TOTAL A PAGAR:</span>
-          <span id="totalPagar" class="total-amount">S/ 0.00</span>
+      <div class="dashboard-card" style="border-left-color: var(--tesla-cyan)">
+        <div class="row align-items-end">
+          <div class="col-md-6">
+            <label class="form-label">
+              <i class="bi bi-search me-2"></i>Buscar Alumno por DNI
+            </label>
+            <div class="input-group">
+              <input
+                type="text"
+                id="inputBuscarAlumno"
+                class="form-control"
+                placeholder="Ingrese DNI (8 dígitos)"
+                maxlength="8"
+                onkeypress="if(event.key === 'Enter') buscarDeudas()"
+              />
+              <button class="btn btn-tesla-search" onclick="buscarDeudas()">
+                BUSCAR
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6 text-end">
+            <small class="text-muted"
+              ><i class="bi bi-info-circle"></i> Ingrese el DNI para ver las
+              deudas pendientes</small
+            >
+          </div>
         </div>
-        <button class="btn btn-primary-tesla btn-lg" onclick="procesarPagoSeleccionado()">
-          <i class="bi bi-credit-card me-2"></i> PAGAR SELECCIONADAS
-        </button>
+      </div>
+
+      <div class="dashboard-card p-0 overflow-hidden" style="border-left: none">
+        <div class="p-3" style="border-bottom: 2px solid var(--tesla-sky-blue)">
+          <h5 class="m-0" style="color: var(--tesla-navy); font-weight: 700">
+            <i
+              class="bi bi-list-check me-2"
+              style="color: var(--tesla-cyan)"
+            ></i>
+            Cuotas Pendientes
+          </h5>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="table-container">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th style="width: 100px; text-align: center">Acción</th>
+                  <th>Concepto</th>
+                  <th>Monto</th>
+                  <th>Vencimiento</th>
+                  <th>Estado</th>
+                  <th>N° Recibo</th>
+                </tr>
+              </thead>
+              <tbody id="tablaCuotasBody">
+                <tr>
+                  <td colspan="6" class="text-center py-5">
+                    <div style="opacity: 0.3">
+                      <i
+                        class="bi bi-wallet2"
+                        style="font-size: 4rem; color: var(--tesla-navy)"
+                      ></i>
+                    </div>
+                    <p class="text-muted mt-3 fw-semibold">
+                      Ingrese un DNI y presione buscar para cargar los datos.
+                    </p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div
+          class="p-4"
+          style="
+            background-color: var(--tesla-light-gray);
+            border-top: 1px solid #e0e6ed;
+          "
+        >
+          <div class="d-flex justify-content-end align-items-center gap-4">
+            <div class="d-flex align-items-center">
+              <span class="total-label">TOTAL A PAGAR:</span>
+              <span id="totalPagar" class="total-amount">S/ 0.00</span>
+            </div>
+            <button
+              class="btn btn-primary-tesla btn-lg"
+              onclick="procesarPagoSeleccionado()"
+            >
+              <i class="bi bi-credit-card me-2"></i> PAGAR SELECCIONADAS
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>
