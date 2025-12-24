@@ -1,158 +1,374 @@
-<div class="card shadow-sm p-4">
-  <h2><i class="fas fa-edit me-2"></i> Nueva Matrícula</h2>
-  <hr />
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <div id="matricula-steps">
-    <div id="step-1">
-      <h4>Paso 1: Identificación del Alumno</h4>
-      <div class="row g-2 mb-4 align-items-center">
-        <div class="col-8 col-md-9">
-          <input
-            type="number"
-            class="form-control"
-            id="alumno-search-input"
-            placeholder="Ingrese DNI del Alumno..."
-          />
-        </div>
-        <div class="col-4 col-md-3">
-          <button class="btn btn-secondary w-100" id="btn-buscar-alumno">
-            <i class="fas fa-search"></i> Buscar
-          </button>
-        </div>
-      </div>
+<style>
+    /* ============================================
+       VARS & THEME (Tesla Design System)
+       ============================================ */
+    :root {
+        --tesla-navy: #1a2332;
+        --tesla-dark-blue: #0f1823;
+        --tesla-sky-blue: #4fc3f7;
+        --tesla-cyan: #00bcd4;
+        --tesla-white: #ffffff;
+        --tesla-light-gray: #f5f7fa;
+        --tesla-success: #10b981;
+        --tesla-danger: #ef4444;
+        --tesla-warning: #f59e0b;
+        --tesla-gradient-primary: linear-gradient(135deg, #1a2332 0%, #0f1823 100%);
+        --tesla-gradient-accent: linear-gradient(135deg, #4fc3f7 0%, #00bcd4 100%);
+        --tesla-shadow-sm: 0 2px 4px rgba(15, 24, 35, 0.1);
+        --tesla-shadow-md: 0 4px 12px rgba(15, 24, 35, 0.15);
+    }
 
-      <div
-        id="alerta-ya-matriculado"
-        class="alert alert-warning mt-3 border-warning"
-        style="display: none"
-      >
-        <h5 class="alert-heading text-warning">
-          <i class="fas fa-exclamation-triangle"></i> Atención
-        </h5>
-        <hr />
-        <p class="mb-0 text-dark">
-          El alumno <strong id="nombre-alumno-error"></strong> ya tiene una matrícula registrada en el periodo <strong>2026</strong>.
+    /* ============================================
+       CARD & LAYOUT
+       ============================================ */
+    .tesla-card {
+        background: var(--tesla-white);
+        border-radius: 12px;
+        border: none;
+        box-shadow: var(--tesla-shadow-sm);
+        border-top: 4px solid var(--tesla-cyan);
+        transition: all 0.3s ease;
+    }
+
+    .page-header-title {
+        color: var(--tesla-navy);
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    /* ============================================
+       STEPS HEADERS
+       ============================================ */
+    .step-header {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--tesla-navy);
+        border-bottom: 2px solid #eef2f7;
+        padding-bottom: 15px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .step-badge {
+        background: var(--tesla-gradient-accent);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 5px rgba(0, 188, 212, 0.3);
+    }
+
+    /* ============================================
+       INPUTS & SELECTS
+       ============================================ */
+    .form-control-tesla, .form-select-tesla {
+        border-radius: 8px;
+        border: 1px solid #e0e6ed;
+        padding: 10px 15px;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        color: var(--tesla-navy);
+        background-color: #fff;
+    }
+
+    .form-control-tesla:focus, .form-select-tesla:focus {
+        border-color: var(--tesla-sky-blue);
+        box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.2);
+        outline: none;
+    }
+
+    .form-control-tesla:disabled, .form-select-tesla:disabled {
+        background-color: #f8f9fa;
+        opacity: 0.8;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--tesla-navy);
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    /* ============================================
+       ALERTS (Custom)
+       ============================================ */
+    .alert-tesla-success {
+        background-color: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        color: #065f46;
+        border-radius: 8px;
+    }
+    
+    .alert-tesla-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        color: #92400e;
+        border-radius: 8px;
+    }
+
+    .summary-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid var(--tesla-cyan);
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn-tesla-primary {
+        background: var(--tesla-gradient-accent);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 10px 24px;
+        box-shadow: var(--tesla-shadow-sm);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-tesla-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+        color: white;
+    }
+
+    .btn-tesla-secondary {
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        color: #64748b;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 10px 20px;
+        transition: all 0.3s;
+    }
+
+    .btn-tesla-secondary:hover {
+        background: #f1f5f9;
+        color: var(--tesla-navy);
+    }
+
+    .btn-tesla-success {
+        background-color: var(--tesla-success);
+        border: none;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 10px 24px;
+        box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-tesla-success:hover {
+        background-color: #059669;
+        transform: translateY(-2px);
+    }
+
+    /* ============================================
+       TABLE
+       ============================================ */
+    .table-tesla thead th {
+        background: var(--tesla-navy);
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 12px;
+    }
+    .table-tesla tbody td {
+        vertical-align: middle;
+        padding: 12px;
+        color: var(--tesla-dark-blue);
+    }
+</style>
+
+<div class="container-fluid animate__animated animate__fadeIn p-4">
+    
+    <div class="mb-4">
+        <h1 class="h3 mb-1 page-header-title">
+            <i class="fas fa-file-signature me-2" style="color: var(--tesla-cyan);"></i>Proceso de Matrícula
+        </h1>
+        <p class="text-muted mb-0 small" style="border-left: 3px solid var(--tesla-cyan); padding-left: 10px;">
+            Complete los pasos para registrar una nueva matrícula académica.
         </p>
-      </div>
-
-      <div
-        id="alumno-seleccionado-info"
-        class="alert alert-success mt-3"
-        style="display: none"
-      >
-        <h5 class="alert-heading">
-          <i class="fas fa-user-check"></i> Alumno Disponible
-        </h5>
-        <hr />
-        <p class="mb-0">
-          <strong>Nombre:</strong> <span id="nombre-alumno-display"></span
-          ><br />
-          <strong>DNI:</strong> <span id="dni-alumno-display"></span>
-        </p>
-      </div>
-
-      <div class="mt-4 d-flex justify-content-end gap-2">
-        <button class="btn btn-outline-danger" onclick="cancelarMatricula()">
-          Cancelar
-        </button>
-        <button class="btn btn-primary" id="btn-siguiente-paso1" disabled>
-          Siguiente <i class="fas fa-arrow-right ms-1"></i>
-        </button>
-      </div>
     </div>
 
-    <div id="step-2" style="display: none">
-      <h4>Paso 2: Datos de la Matrícula</h4>
+    <div class="card tesla-card p-4">
+        
+        <div id="matricula-steps">
+            
+            <div id="step-1">
+                <div class="step-header">
+                    <span class="step-badge">1</span> Identificación del Alumno
+                </div>
 
-      <div class="row g-3 mb-4">
-        <div class="col-md-4">
-          <label for="anio-escolar" class="form-label">Año Escolar</label>
-          <select id="anio-escolar" class="form-select">
-            <option value="2026">2026</option>
-          </select>
+                <div class="row justify-content-center">
+                    <div class="col-lg-8">
+                        <div class="row g-2 mb-4 align-items-center">
+                            <div class="col-8 col-md-9">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0" style="border-color: #e0e6ed;">
+                                        <i class="fas fa-id-card text-muted"></i>
+                                    </span>
+                                    <input type="number" 
+                                           class="form-control form-control-tesla border-start-0 ps-2" 
+                                           id="alumno-search-input" 
+                                           placeholder="Ingrese DNI del Alumno para buscar..." />
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-3">
+                                <button class="btn btn-tesla-secondary w-100 h-100" id="btn-buscar-alumno">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="alerta-ya-matriculado" class="alert alert-tesla-warning shadow-sm animate__animated animate__fadeIn" style="display: none">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle fa-2x me-3 opacity-50"></i>
+                                <div>
+                                    <h5 class="alert-heading fs-6 fw-bold mb-1">Atención</h5>
+                                    <p class="mb-0 small">
+                                        El alumno <strong id="nombre-alumno-error"></strong> ya tiene una matrícula registrada para el periodo <strong>2026</strong>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="alumno-seleccionado-info" class="alert alert-tesla-success shadow-sm animate__animated animate__fadeInUp" style="display: none">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-check fa-2x me-3 opacity-50"></i>
+                                <div>
+                                    <h5 class="alert-heading fs-6 fw-bold mb-1">Alumno Disponible</h5>
+                                    <p class="mb-0">
+                                        <span class="text-muted small">Nombre:</span> <strong id="nombre-alumno-display" class="fs-5"></strong><br />
+                                        <span class="text-muted small">DNI:</span> <span id="dni-alumno-display" class="fw-bold"></span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 d-flex justify-content-end gap-3 border-top pt-3">
+                    <button class="btn btn-outline-danger border-0" onclick="cancelarMatricula()">
+                        <i class="fas fa-times me-1"></i> Cancelar
+                    </button>
+                    <button class="btn btn-tesla-primary" id="btn-siguiente-paso1" disabled>
+                        Siguiente <i class="fas fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="step-2" style="display: none">
+                <div class="step-header">
+                    <span class="step-badge">2</span> Datos Académicos
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <label for="anio-escolar" class="form-label">Año Escolar</label>
+                        <select id="anio-escolar" class="form-select form-select-tesla">
+                            <option value="2026">2026</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="nivel-select" class="form-label">Nivel Educativo</label>
+                        <select id="nivel-select" class="form-select form-select-tesla">
+                            <option value="" disabled selected>Seleccione Nivel</option>
+                            <option value="Primaria">Primaria</option>
+                            <option value="Secundaria">Secundaria</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="grado-select" class="form-label">Grado / Año</label>
+                        <select id="grado-select" class="form-select form-select-tesla" disabled>
+                            <option value="" disabled selected>Seleccione Nivel primero</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label for="fecha-matricula" class="form-label">Fecha de Registro</label>
+                        <input type="date" id="fecha-matricula" class="form-control form-control-tesla" disabled />
+                    </div>
+
+                    <input type="hidden" id="hidden-alumno-id" />
+                </div>
+
+                <div class="mt-5 d-flex justify-content-end gap-3 border-top pt-3">
+                    <button class="btn btn-tesla-secondary" id="btn-atras-paso2">
+                        <i class="fas fa-arrow-left me-1"></i> Anterior
+                    </button>
+                    <button class="btn btn-tesla-primary" id="btn-siguiente-paso2" disabled>
+                        Siguiente <i class="fas fa-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="step-3" style="display: none">
+                <div class="step-header">
+                    <span class="step-badge">3</span> Vista Previa y Confirmación
+                </div>
+
+                <div class="summary-box">
+                    <div class="row align-items-center">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <small class="text-muted d-block text-uppercase fw-bold">Alumno</small>
+                            <span id="resumen-nombre-alumno" class="fs-5 fw-bold text-dark"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block text-uppercase fw-bold">Nivel</small>
+                            <span id="resumen-nivel" class="text-primary fw-bold"></span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block text-uppercase fw-bold">Grado</small>
+                            <span id="resumen-grado" class="text-primary fw-bold"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-4 border rounded-3 overflow-hidden">
+                    <table class="table table-tesla table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Monto</th>
+                                <th>Vencimiento</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuotas-preview-body">
+                            </tbody>
+                    </table>
+                </div>
+                
+                <div id="cuota-warning" class="alert alert-light border-0 shadow-sm d-flex align-items-center text-muted small">
+                    <i class="fas fa-info-circle me-2 text-info"></i> La generación de cuotas es una proyección automática. Se confirmará al guardar.
+                </div>
+
+                <div class="mt-5 d-flex justify-content-end gap-3 border-top pt-3">
+                    <button class="btn btn-tesla-secondary" id="btn-atras-paso3">
+                        <i class="fas fa-arrow-left me-1"></i> Anterior
+                    </button>
+                    <button class="btn btn-tesla-success" id="btn-confirmar-matricula">
+                        <i class="fas fa-check me-2"></i> Confirmar Matrícula
+                    </button>
+                </div>
+            </div>
         </div>
-
-        <div class="col-md-4">
-          <label for="nivel-select" class="form-label">Nivel</label>
-          <select id="nivel-select" class="form-select">
-            <option value="" disabled selected>Seleccione Nivel</option>
-            <option value="Primaria">Primaria</option>
-            <option value="Secundaria">Secundaria</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label for="grado-select" class="form-label">Grado</label>
-          <select id="grado-select" class="form-select" disabled>
-            <option value="" disabled selected>Seleccione Nivel primero</option>
-          </select>
-        </div>
-
-        <div class="col-md-12">
-          <label for="fecha-matricula" class="form-label"
-            >Fecha de Matrícula</label
-          >
-          <input
-            type="date"
-            id="fecha-matricula"
-            class="form-control"
-            disabled
-          />
-        </div>
-
-        <input type="hidden" id="hidden-alumno-id" />
-      </div>
-
-      <div class="mt-4 d-flex justify-content-end gap-2">
-        <button class="btn btn-secondary" id="btn-atras-paso2">
-          <i class="fas fa-arrow-left me-1"></i> Anterior
-        </button>
-        <button class="btn btn-primary" id="btn-siguiente-paso2" disabled>
-          Siguiente <i class="fas fa-arrow-right ms-1"></i>
-        </button>
-      </div>
     </div>
-
-    <div id="step-3" style="display: none">
-      <h4>Paso 3: Vista Previa de Cuotas</h4>
-
-      <div class="alert alert-light border">
-        <strong>Resumen:</strong> Matrícula para el alumno
-        <span id="resumen-nombre-alumno" class="fw-bold"></span>
-        <br />
-        <strong>Nivel:</strong>
-        <span id="resumen-nivel" class="fw-bold"></span> |
-        <strong>Grado:</strong> <span id="resumen-grado" class="fw-bold"></span>
-      </div>
-
-      <div class="table-responsive mb-4">
-        <table class="table table-bordered table-hover">
-          <thead class="table-light">
-            <tr>
-              <th>Concepto</th>
-              <th>Monto</th>
-              <th>Vencimiento Estimado</th>
-              <th>Estado Inicial</th>
-            </tr>
-          </thead>
-          <tbody id="cuotas-preview-body"></tbody>
-        </table>
-        <div id="cuota-warning" class="alert alert-info mt-2">
-          <i class="fas fa-info-circle"></i> La generación de cuotas es una
-          proyección y se confirmará al guardar.
-        </div>
-      </div>
-
-      <div class="mt-4 d-flex justify-content-end gap-2">
-        <button class="btn btn-secondary" id="btn-atras-paso3">
-          <i class="fas fa-arrow-left me-1"></i> Anterior
-        </button>
-        <button class="btn btn-success" id="btn-confirmar-matricula">
-          <i class="fas fa-check me-2"></i> Confirmar Matrícula
-        </button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script src="../js/matriculas.js"></script>
