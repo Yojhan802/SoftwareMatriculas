@@ -1,194 +1,57 @@
-<style>
-  /* Contenedor Principal estilo Card */
-  .payment-dashboard-card {
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 100%;
-    margin: 0 auto;
-  }
+<div class="dashboard-card" style="border-left-color: var(--tesla-danger);">
 
-  .payment-title {
-    color: #2c3e50;
-    margin-bottom: 25px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 2px solid #f0f2f5;
-    padding-bottom: 15px;
-  }
-
-  /* Inputs y Buscadores */
-  .search-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-  }
-
-  .form-control-custom {
-    flex: 1;
-    padding: 10px 15px;
-    border: 1px solid #ced4da;
-    border-radius: 5px;
-    font-size: 1rem;
-    outline: none;
-  }
-  .form-control-custom:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.25);
-  }
-
-  /* Botones */
-  .btn-custom {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
-  }
-  .btn-custom:active {
-    transform: scale(0.98);
-  }
-
-  .btn-primary-custom {
-    background-color: #0d6efd;
-    color: white;
-  }
-  .btn-primary-custom:hover {
-    background-color: #0b5ed7;
-  }
-
-  .btn-secondary-custom {
-    background-color: #6c757d;
-    color: white;
-  }
-  .btn-secondary-custom:hover {
-    background-color: #5c636a;
-  }
-
-  .btn-danger-custom {
-    background-color: #dc3545;
-    color: white;
-  }
-  .btn-danger-custom:hover {
-    background-color: #bb2d3b;
-  }
-
-  /* Tabla */
-  .table-custom {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-
-  .table-custom th {
-    background-color: #f1f3f5;
-    color: #495057;
-    font-weight: 600;
-    text-align: left;
-    padding: 12px;
-    border-bottom: 2px solid #dee2e6;
-  }
-
-  .table-custom td {
-    padding: 12px;
-    border-bottom: 1px solid #dee2e6;
-    vertical-align: middle;
-  }
-
-  /* Etiquetas de estado (Badges) */
-  .status-badge {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85em;
-    font-weight: 600;
-  }
-  .badge-debe {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-  }
-  .badge-pagado {
-    background-color: #d1e7dd;
-    color: #0f5132;
-    border: 1px solid #badbcc;
-  }
-
-  /* Filas deshabilitadas (Lógica consecutiva) */
-  .row-disabled {
-    background-color: #f8f9fa;
-    opacity: 0.5;
-    pointer-events: none; /* No clickeable */
-  }
-
-  /* Tarjeta de Resultado de Recibo */
-  .receipt-card {
-    border: 2px dashed #adb5bd;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #fcfcfc;
-    margin-top: 20px;
-    display: none; /* Oculto por defecto hasta que JS lo muestre */
-  }
-
-  .receipt-info p {
-    margin: 8px 0;
-    font-size: 1.05rem;
-  }
-
-  /* Checkbox más grande */
-  .chk-pago {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-
-  /* Clase para ocultar secciones */
-  .hidden {
-    display: none !important;
-  }
-</style>
-<style>
-  /* mismos estilos */
-</style>
-
-<div class="payment-dashboard-card">
-  <h2 class="payment-title">🚫 Anulación de Recibos</h2>
-
-  <!-- BUSCAR RECIBO -->
-  <div class="search-group" style="background: #fff5f5; border-color: #f5c6cb">
-    <input
-            type="text"
-            id="inputBuscarRecibo"
-            class="form-control-custom"
-            placeholder="Ingrese N° de Recibo (Ejm: 001-0000001)"
-            maxlength="11"
-            onkeypress="if(event.key==='Enter') buscarRecibo()"
-            oninput="this.value = this.value.replace(/[^0-9-]/g, '')"
-    />
-    <button class="btn-custom btn-secondary-custom" onclick="buscarRecibo()">
-      🔍 Buscar
-    </button>
+  <div class="d-flex align-items-center mb-4 pb-3" style="border-bottom: 2px solid var(--tesla-light-gray);">
+    <h3 style="color: var(--tesla-dark-blue); font-weight: 700; margin: 0;">
+      Anulación de Recibos
+    </h3>
   </div>
 
-  <!-- RESULTADO -->
-  <div id="resultadoRecibo" class="receipt-card">
-    <h4>Detalle del Recibo</h4>
+  <div class="search-group p-4 mb-4 rounded" style="background-color: #fff5f5; border: 1px solid var(--tesla-danger);">
+    <label class="form-label fw-bold" style="color: var(--tesla-danger);">Buscar Recibo a Anular:</label>
 
-    <p><strong>🧾 Recibo:</strong> <span id="lblRecibo"></span></p>
-    <p><strong>🎓 Alumno:</strong> <span id="lblAlumno"></span></p>
-    <p><strong>💰 Monto:</strong> <span id="lblMonto"></span></p>
+    <div class="input-group">
+      <input
+              type="text"
+              id="inputBuscarRecibo"
+              class="form-control form-control-custom"
+              placeholder="Ingrese N° de Recibo (Ejm: 001-0000001)"
+              maxlength="11"
+              onkeypress="if(event.key==='Enter') buscarRecibo()"
+              oninput="this.value = this.value.replace(/[^0-9-]/g, '')"
+              style="border: 1px solid #fca5a5;"
+      />
+      <button class="btn btn-primary" type="button" onclick="buscarRecibo()">
+        🔍 Buscar
+      </button>
+    </div>
+  </div>
 
-    <div style="text-align: right">
-      <button class="btn-custom btn-danger-custom" onclick="anularRecibo()">
+  <div id="resultadoRecibo" class="receipt-card mt-4 p-4 rounded shadow-sm position-relative"
+       style="display: none; background-color: var(--tesla-light-gray); border: 2px dashed var(--tesla-medium-gray);">
+
+    <h4 style="color: var(--tesla-dark-blue); font-weight: 700; margin-bottom: 20px;">
+      Detalle del Recibo
+    </h4>
+
+    <div class="row">
+      <div class="col-12">
+        <p class="mb-2 fs-5">
+          <strong>🧾 Recibo:</strong>
+          <span id="lblRecibo" style="color: var(--tesla-cyan); font-weight: bold;"></span>
+        </p>
+        <p class="mb-2 fs-5">
+          <strong>🎓 Alumno:</strong>
+          <span id="lblAlumno" class="fw-bold" style="color: var(--tesla-navy);"></span>
+        </p>
+        <p class="mb-2 fs-5">
+          <strong>💰 Monto:</strong>
+          <span id="lblMonto" class="fw-bold" style="color: var(--tesla-success);"></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="text-end mt-4 pt-3" style="border-top: 1px solid var(--tesla-medium-gray);">
+      <button class="btn btn-danger btn-custom btn-danger-custom" type="button" onclick="anularRecibo()">
         ⚠️ Confirmar Anulación
       </button>
     </div>
