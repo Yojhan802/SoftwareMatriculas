@@ -215,47 +215,25 @@ public class ChatController {
      */
     @MessageMapping("/chat.send")
     public void sendMessage(@Payload SendMessageRequest request, Principal principal) {
-        try {
-            // ✅ Obtener usuario desde el Principal
-            if (principal == null) {
-                throw new RuntimeException("Usuario no autenticado");
-            }
 
-            // Buscar usuario por username (principal.getName() devuelve el username)
-            Usuario usuario = usuarioService.finByUserName(principal.getName());
+        Usuario remitente = usuarioService.finByUserName(principal.getName());
 
-            if (usuario == null) {
-                throw new RuntimeException("Usuario no encontrado: " + principal.getName());
-            }
+        Usuario destinatario = usuarioRepository.findById(request.getDestinatarioId())
+                .orElseThrow(() -> new RuntimeException("Destinatario no encontrado"));
 
-            ChatMessageDTO message = chatService.sendMessage(usuario, request);
+        ChatMessageDTO message = chatService.sendMessage(remitente, request);
 
-            // Enviar al destinatario específico
-            messagingTemplate.convertAndSendToUser(
-                    request.getDestinatarioId().toString(),
-                    "/queue/messages",
-                    message
-            );
+        messagingTemplate.convertAndSendToUser(
+                destinatario.getNombreUsuario(),
+                "/queue/messages",
+                message
+        );
 
-            // También enviar al remitente para confirmación
-            messagingTemplate.convertAndSendToUser(
-                    usuario.getId().toString(),
-                    "/queue/messages",
-                    message
-            );
-        } catch (Exception e) {
-            System.err.println("❌ Error en sendMessage: " + e.getMessage());
-            e.printStackTrace();
-
-            // Enviar error al remitente
-            if (principal != null) {
-                messagingTemplate.convertAndSendToUser(
-                        principal.getName(),
-                        "/queue/errors",
-                        "Error: " + e.getMessage()
-                );
-            }
-        }
+        messagingTemplate.convertAndSendToUser(
+                remitente.getNombreUsuario(),
+                "/queue/messages",
+                message
+        );
     }
 
     /**
