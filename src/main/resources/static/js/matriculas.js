@@ -65,20 +65,28 @@ function asignarEvento(id, evento, funcion) {
 }
 
 function resetUI() {
-    document.getElementById('alumno-search-input').value = '';
+    const inputDni = document.getElementById('alumno-search-input');
+    if(inputDni) inputDni.value = '';
     
     // Ocultar ambas alertas
-    document.getElementById('alumno-seleccionado-info').style.display = 'none';
+    const infoDiv = document.getElementById('alumno-seleccionado-info');
+    if(infoDiv) infoDiv.style.display = 'none';
+    
     const alertaYaMatriculado = document.getElementById('alerta-ya-matriculado');
     if(alertaYaMatriculado) alertaYaMatriculado.style.display = 'none';
 
-    document.getElementById('btn-siguiente-paso1').disabled = true;
+    const btnSig = document.getElementById('btn-siguiente-paso1');
+    if(btnSig) btnSig.disabled = true;
     
     // Resetear selects del paso 2
-    document.getElementById('nivel-select').selectedIndex = 0;
+    const nivelSelect = document.getElementById('nivel-select');
+    if(nivelSelect) nivelSelect.selectedIndex = 0;
+    
     const gradoSelect = document.getElementById('grado-select');
-    gradoSelect.innerHTML = '<option value="" disabled selected>Seleccione Nivel primero</option>';
-    gradoSelect.disabled = true;
+    if(gradoSelect) {
+        gradoSelect.innerHTML = '<option value="" disabled selected>Seleccione Nivel primero</option>';
+        gradoSelect.disabled = true;
+    }
 }
 
 document.addEventListener("DOMContentLoaded", initMatriculas);
@@ -112,12 +120,11 @@ function cancelarMatricula() {
 }
 
 // =========================================================
-// PASO 1: BÚSQUEDA Y VERIFICACIÓN (LÓGICA NUEVA)
+// PASO 1: BÚSQUEDA Y VERIFICACIÓN
 // =========================================================
 
 // Función que descarga la lista de matrículas y busca si el alumno ya existe
 async function verificarEstadoMatricula(idAlumno) {
-    // URL: GET /api/matricula (Ya existe en tu controlador)
     const url = API_MATRICULA; 
     const anioActual = '2026'; 
 
@@ -127,19 +134,14 @@ async function verificarEstadoMatricula(idAlumno) {
         if (response.ok) {
             const listaMatriculas = await response.json();
             
-            // Debug para ver cómo llegan los datos del backend
-            console.log("Matriculas cargadas:", listaMatriculas);
-            console.log("Buscando ID:", idAlumno);
-
             // Buscamos coincidencia.
-            // NOTA: Probamos varias formas de escribir el ID por si acaso el DTO cambia
             const existe = listaMatriculas.some(m => {
                 // Obtenemos el ID del alumno de la fila actual
-                const idEnLista = m.idAlumno || m.id_alumno || m.IdAlumno || (m.alumno && m.alumno.id);
+                // Intentamos varias posibilidades por robustez, aunque tu DTO usa IdAlumno
+                const idEnLista = m.IdAlumno || m.idAlumno || m.id_alumno || (m.alumno && m.alumno.id);
                 // Obtenemos el periodo
                 const periodoEnLista = m.Periodo || m.periodo || m.anio;
 
-                // Comparamos como Strings para evitar errores de tipo (numero vs texto)
                 return (idEnLista && idEnLista.toString() === idAlumno.toString()) && 
                        (periodoEnLista && periodoEnLista.toString() === anioActual);
             });
@@ -187,6 +189,20 @@ async function buscarAlumno() {
         } else if (response.ok) {
             const data = await response.json();
             
+            // =========================================================
+            // VALIDACIÓN DE ESTADO DEL ALUMNO (CORREGIDA)
+            // =========================================================
+            // Usamos "data.EstadoActual" (con Mayúscula inicial) porque así se llama en tu AlumnoDTO.java
+            if (data.EstadoActual !== "Activo") {
+                alert(`NO SE PUEDE MATRICULAR.\nEl alumno se encuentra en estado: ${data.EstadoActual || 'Desconocido'}`);
+                
+                // Restauramos botón buscar y salimos
+                btnBuscar.disabled = false;
+                btnBuscar.innerHTML = '<i class="fas fa-search"></i> Buscar';
+                return; 
+            }
+            // =========================================================
+
             if (data.IdAlumno) {
                 const tempAlumno = {
                     id: data.IdAlumno,
@@ -194,20 +210,18 @@ async function buscarAlumno() {
                     nombreCompleto: `${data.Nombre} ${data.Apellido}`
                 };
 
-                // === AQUÍ VERIFICAMOS SI YA ESTÁ EN LA LISTA ===
+                // Verificar si ya tiene matrícula este año
                 const yaMatriculado = await verificarEstadoMatricula(tempAlumno.id);
 
                 if (yaMatriculado) {
-                    // SI YA EXISTE: MOSTRAR ALERTA AMARILLA
                     if(alertaError) {
                         document.getElementById('nombre-alumno-error').textContent = tempAlumno.nombreCompleto;
                         alertaError.style.display = 'block';
                     } else {
                         alert(`El alumno ${tempAlumno.nombreCompleto} YA está matriculado.`);
                     }
-                    // NO habilitamos el botón siguiente
                 } else {
-                    // SI NO EXISTE: FLUJO NORMAL
+                    // Si está activo y no matriculado, procedemos
                     alumnoSeleccionado = tempAlumno;
                     document.getElementById('nombre-alumno-display').textContent = alumnoSeleccionado.nombreCompleto;
                     document.getElementById('dni-alumno-display').textContent = alumnoSeleccionado.dni;
@@ -227,8 +241,14 @@ async function buscarAlumno() {
         console.error("Error Fetch:", error);
         alert("Error de conexión con el servicio de alumnos.");
     } finally {
-        btnBuscar.disabled = false;
-        btnBuscar.innerHTML = '<i class="fas fa-search"></i> Buscar';
+        // Restaurar estado del botón buscar
+        if (btnBuscar.disabled && (!alumnoSeleccionado && (!alertaError || alertaError.style.display === 'none'))) {
+             btnBuscar.disabled = false;
+             btnBuscar.innerHTML = '<i class="fas fa-search"></i> Buscar';
+        } else if (alumnoSeleccionado || (alertaError && alertaError.style.display === 'block')) {
+             btnBuscar.disabled = false;
+             btnBuscar.innerHTML = '<i class="fas fa-search"></i> Buscar';
+        }
     }
 }
 
@@ -303,7 +323,7 @@ function goToStep3() {
 
     // Payload para enviar al backend
     matriculaPayload = {
-        id_alumno: alumnoSeleccionado.id, // Asegúrate que tu DTO espera "id_alumno" o "idAlumno"
+        id_alumno: alumnoSeleccionado.id, 
         Periodo: periodo,
         fecha_Matricula: fecha,
         nivel: nivel,

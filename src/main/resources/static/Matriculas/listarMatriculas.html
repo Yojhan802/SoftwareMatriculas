@@ -63,6 +63,23 @@
         border-color: #4e73df;
         box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
     }
+
+    /* --- REGLA PARA OCULTAR BOTÓN EDITAR --- */
+    /* Como el botón se genera en JS, usamos CSS para ocultarlo visualmente */
+    /* Opción A: Oculta cualquier botón que tenga el icono de lápiz/editar */
+    #tablaMatriculas tbody td button:has(.fa-edit),
+    #tablaMatriculas tbody td button:has(.fa-pen),
+    #tablaMatriculas tbody td a:has(.fa-edit),
+    #tablaMatriculas tbody td a:has(.fa-pen) {
+        display: none !important;
+    }
+
+    /* Opción B (Respaldo para navegadores antiguos): Oculta solo el icono */
+    #tablaMatriculas .fa-edit, 
+    #tablaMatriculas .fa-pen,
+    #tablaMatriculas .fa-pencil-alt {
+        display: none !important;
+    }
 </style>
 
 <div class="container-fluid animate__animated animate__fadeIn">
