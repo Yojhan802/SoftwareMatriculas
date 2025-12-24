@@ -1,271 +1,268 @@
 <!DOCTYPE html>
 <html lang="es">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reportes - Sistema de Matrículas</title>
-  <script src="js/reportes.js"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 0;
-      /* ✅ QUITADO */
-      margin: 0;
-      /* ✅ ASEGURA SIN ESPACIOS */
-    }
-
-    .container {
-      width: 100%;
-      max-width: none;
-      /* ✅ sin límite */
-      padding: 30px;
-      /* ✅ espacio interno elegante */
-    }
-
-    h1 {
-      text-align: center;
-      color: white;
-      margin-bottom: 30px;
-      font-size: 32px;
-    }
-
-    .payment-dashboard-card {
-      background: white;
-      border-radius: 15px;
-      padding: 25px;
-      margin-bottom: 25px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .payment-title {
-      font-size: 20px;
-      color: #333;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #667eea;
-    }
-
-    .search-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      border: 2px solid #e0e0e0;
-    }
-
-    .form-control-custom {
-      width: 100%;
-      padding: 12px 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      font-size: 14px;
-      transition: all 0.3s;
-    }
-
-    .form-control-custom:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .form-control-custom:disabled {
-      background: #f0f0f0;
-      cursor: not-allowed;
-    }
-
-    .btn-custom {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-    }
-
-    .btn-primary-custom {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .btn-primary-custom:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    .btn-primary-custom:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    small {
-      display: block;
-      margin-top: 10px;
-      font-size: 12px;
-    }
-
-    /* ⭐ ESTILOS PARA ALERTAS ⭐ */
-    #alertContainerReportes {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      max-width: 400px;
-    }
-
-    .alert {
-      padding: 15px 20px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      animation: slideInRight 0.3s ease-out;
-    }
-
-    @keyframes slideInRight {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reportes - Sistema de Matrículas</title>
+    <script src="js/reportes.js"></script>
+    <style>
+      /* =============================
+     BASE (heredada del dashboard)
+  ============================== */
+      * {
+        box-sizing: border-box;
       }
 
-      to {
-        transform: translateX(0);
+      .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+      }
+
+      h1 {
+        color: var(--tesla-dark-blue);
+        font-weight: 700;
+        margin-bottom: 30px;
+      }
+
+      /* =============================
+     TARJETAS DE REPORTES
+  ============================== */
+      .payment-dashboard-card {
+        background: var(--tesla-white);
+        border-radius: 12px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: var(--tesla-shadow-sm);
+        border-left: 5px solid var(--tesla-sky-blue);
+        animation: fadeInUp 0.5s ease-out;
+      }
+
+      .payment-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--tesla-dark-blue);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--tesla-sky-blue);
+      }
+
+      /* =============================
+     FORMULARIOS
+  ============================== */
+      .search-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px;
+        padding: 20px;
+        background: var(--tesla-light-gray);
+        border-radius: 10px;
+        border: 1px solid var(--tesla-medium-gray);
+      }
+
+      .form-control-custom {
+        width: 100%;
+        padding: 12px 15px;
+        border-radius: 8px;
+        border: 2px solid var(--tesla-medium-gray);
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .form-control-custom:focus {
+        outline: none;
+        border-color: var(--tesla-sky-blue);
+        box-shadow: 0 0 0 3px rgba(79, 195, 247, 0.25);
+      }
+
+      .form-control-custom:disabled {
+        background: #eef1f5;
+        cursor: not-allowed;
+      }
+
+      /* =============================
+     BOTONES (TESLA)
+  ============================== */
+      .btn-custom {
+        padding: 12px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: var(--tesla-gradient-accent);
+        color: white;
+        box-shadow: var(--tesla-shadow-sm);
+      }
+
+      .btn-custom:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: var(--tesla-shadow-glow);
+      }
+
+      .btn-custom:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      small {
+        display: block;
+        margin-top: 10px;
+        color: #6c757d;
+      }
+
+      /* =============================
+     ALERTAS (COHERENTES)
+  ============================== */
+      #alertContainerReportes {
+        position: fixed;
+        top: 90px;
+        right: 30px;
+        z-index: 9999;
+        max-width: 400px;
+      }
+
+      .alert {
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: var(--tesla-shadow-md);
+        animation: slideInRight 0.3s ease-out;
+      }
+
+      .alert-success {
+        background: #e6f9f3;
+        border-left: 4px solid var(--tesla-success);
+        color: #065f46;
+      }
+
+      .alert-danger {
+        background: #fee2e2;
+        border-left: 4px solid var(--tesla-danger);
+        color: #7f1d1d;
+      }
+
+      .alert-warning {
+        background: #fff7ed;
+        border-left: 4px solid var(--tesla-warning);
+        color: #92400e;
+      }
+
+      .btn-close {
+        margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 18px;
+        cursor: pointer;
+        opacity: 0.6;
+      }
+
+      .btn-close:hover {
         opacity: 1;
       }
-    }
 
-    .alert-success {
-      background: #d4edda;
-      border-left: 4px solid #28a745;
-      color: #155724;
-    }
+      @keyframes slideInRight {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
 
-    .alert-danger {
-      background: #f8d7da;
-      border-left: 4px solid #dc3545;
-      color: #721c24;
-    }
+  <body>
+    <!-- ⭐ CONTENEDOR DE ALERTAS (POSICIÓN FIJA) ⭐ -->
+    <div id="alertContainerReportes"></div>
 
-    .alert-warning {
-      background: #fff3cd;
-      border-left: 4px solid #ffc107;
-      color: #856404;
-    }
+    <div class="container">
+      <h1>📊 Sistema de Reportes</h1>
 
-    .alert i {
-      font-size: 20px;
-    }
+      <!-- REPORTE 1: MATRICULADOS -->
+      <div class="payment-dashboard-card">
+        <h2 class="payment-title">📄 Reporte de Alumnos Matriculados</h2>
 
-    .btn-close {
-      margin-left: auto;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      opacity: 0.5;
-      transition: opacity 0.2s;
-    }
+        <div class="search-group">
+          <input
+            type="text"
+            id="periodoMatriculados"
+            class="form-control-custom"
+            placeholder="Ingrese el año (ej: 2025)"
+            value="2025"
+          />
 
-    .btn-close:hover {
-      opacity: 1;
-    }
-
-    /* Para iconos de Bootstrap */
-    .bi-check-circle::before {
-      content: "✓";
-    }
-
-    .bi-x-circle::before {
-      content: "✕";
-    }
-
-    .bi-info-circle::before {
-      content: "ℹ";
-    }
-  </style>
-</head>
-
-<body>
-  <!-- ⭐ CONTENEDOR DE ALERTAS (POSICIÓN FIJA) ⭐ -->
-  <div id="alertContainerReportes"></div>
-
-  <div class="container">
-    <h1>📊 Sistema de Reportes</h1>
-
-    <!-- REPORTE 1: MATRICULADOS -->
-    <div class="payment-dashboard-card">
-      <h2 class="payment-title">📄 Reporte de Alumnos Matriculados</h2>
-
-      <div class="search-group">
-        <input type="text" id="periodoMatriculados" class="form-control-custom" placeholder="Ingrese el año (ej: 2025)"
-          value="2025" />
-
-        <div class="btn-group">
-          <button class="btn-custom btn-primary-custom" onclick="window.generarReporteMatriculados('PDF')">
-            📥 PDF
-          </button>
-          <button class="btn-custom btn-primary-custom" onclick="window.generarReporteMatriculados('EXCEL')">
-            📊 Excel
-          </button>
+          <div class="btn-group">
+            <button
+              class="btn-custom btn-primary-custom"
+              onclick="window.generarReporteMatriculados('PDF')"
+            >
+              📥 PDF
+            </button>
+            <button
+              class="btn-custom btn-primary-custom"
+              onclick="window.generarReporteMatriculados('EXCEL')"
+            >
+              📊 Excel
+            </button>
+          </div>
         </div>
+
+        <small style="color: #6c757d">
+          * Ingrese el periodo para generar el reporte de alumnos matriculados.
+        </small>
       </div>
 
-      <small style="color: #6c757d">
-        * Ingrese el periodo para generar el reporte de alumnos matriculados.
-      </small>
-    </div>
+      <!-- REPORTE 2: CUOTAS PENDIENTES -->
+      <div class="payment-dashboard-card">
+        <h2 class="payment-title">💰 Reporte de Cuotas Pendientes</h2>
 
-    <!-- REPORTE 2: CUOTAS PENDIENTES -->
-    <div class="payment-dashboard-card">
-      <h2 class="payment-title">💰 Reporte de Cuotas Pendientes</h2>
+        <div class="search-group">
+          <select
+            id="reporteNivel"
+            class="form-control-custom"
+            onchange="window.actualizarGrados()"
+          >
+            <option value="">Seleccione Nivel</option>
+            <option value="Primaria">Primaria</option>
+            <option value="Secundaria">Secundaria</option>
+          </select>
 
-      <div class="search-group">
-        <select id="reporteNivel" class="form-control-custom" onchange="window.actualizarGrados()">
-          <option value="">Seleccione Nivel</option>
-          <option value="Primaria">Primaria</option>
-          <option value="Secundaria">Secundaria</option>
-        </select>
+          <select id="reporteGrado" class="form-control-custom" disabled>
+            <option value="">-- Seleccione Grado --</option>
+          </select>
 
-        <select id="reporteGrado" class="form-control-custom" disabled>
-          <option value="">-- Seleccione Grado --</option>
-        </select>
-
-        <div class="btn-group">
-          <button class="btn-custom btn-primary-custom" onclick="window.generarReporteCuotas('PDF')">
-            📥 PDF
-          </button>
-          <button class="btn-custom btn-primary-custom" onclick="window.generarReporteCuotas('EXCEL')">
-            📊 Excel
-          </button>
+          <div class="btn-group">
+            <button
+              class="btn-custom btn-primary-custom"
+              onclick="window.generarReporteCuotas('PDF')"
+            >
+              📥 PDF
+            </button>
+            <button
+              class="btn-custom btn-primary-custom"
+              onclick="window.generarReporteCuotas('EXCEL')"
+            >
+              📊 Excel
+            </button>
+          </div>
         </div>
+
+        <small style="color: #6c757d">
+          * Seleccione un nivel para ver los grados disponibles.
+        </small>
       </div>
-
-      <small style="color: #6c757d">
-        * Seleccione un nivel para ver los grados disponibles.
-      </small>
     </div>
-  </div>
-</body>
-
+  </body>
 </html>
