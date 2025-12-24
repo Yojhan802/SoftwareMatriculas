@@ -298,6 +298,8 @@
           type="text"
           id="inputUsuario"
           placeholder="Nombre de usuario (Director)"
+          maxlength="20"
+          oninput="this.value = this.value.replace(/[0-9]/g, '')"
         />
         <button onclick="generarQr()">Generar QR</button>
 

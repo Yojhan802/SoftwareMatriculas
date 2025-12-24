@@ -199,8 +199,10 @@
             type="text"
             id="periodoMatriculados"
             class="form-control-custom"
-            placeholder="Ingrese el año (ej: 2025)"
-            value="2025"
+            placeholder="Ingrese el año (ej: 2026)"
+            value="2026"
+            maxlength="4"
+            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
           />
 
           <div class="btn-group">

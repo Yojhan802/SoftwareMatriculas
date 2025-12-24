@@ -509,6 +509,14 @@
                   class="form-control"
                   id="searchDni"
                   placeholder="Ingrese DNI, nombre o apellido"
+                  oninput="
+    if (/^[0-9]*$/.test(this.value)) {
+      this.maxLength = 8;
+    } else {
+      this.maxLength = 25;
+      this.value = this.value.replace(/[0-9]/g, '');
+    }
+  "
                 />
                 <button class="btn btn-secondary" onclick="limpiarBusqueda()">
                   <i class="bi bi-arrow-clockwise"></i> Limpiar

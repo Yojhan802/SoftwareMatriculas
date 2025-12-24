@@ -5,7 +5,6 @@
 <style>
     /* ============================================
        DEFINICIÓN DE VARIABLES TESLA (Scope Local)
-       (Para asegurar consistencia visual)
        ============================================ */
     :root {
         --tesla-navy: #1a2332;
@@ -24,9 +23,6 @@
         --tesla-shadow-glow: 0 0 15px rgba(79, 195, 247, 0.3);
     }
 
-    /* ============================================
-       ESTRUCTURA Y TARJETAS
-       ============================================ */
     .tesla-card {
         background: var(--tesla-white);
         border-radius: 12px;
@@ -47,9 +43,6 @@
         letter-spacing: -0.5px;
     }
 
-    /* ============================================
-       TABLA ESTILO TESLA
-       ============================================ */
     .table-container {
         border-radius: 8px;
         overflow: hidden;
@@ -89,9 +82,6 @@
         font-weight: 500;
     }
 
-    /* ============================================
-       CONTROLES DE FORMULARIO (Inputs y Selects)
-       ============================================ */
     .form-control-tesla, .form-select-tesla {
         border-radius: 8px;
         border: 1px solid #e0e6ed;
@@ -107,7 +97,6 @@
         outline: none;
     }
 
-    /* Input Group Personalizado */
     .input-group-text-tesla {
         background-color: #fff;
         border: 1px solid #e0e6ed;
@@ -117,10 +106,6 @@
         border-bottom-left-radius: 8px;
     }
     
-    /* ============================================
-       BOTONES
-       ============================================ */
-    /* Botón Principal (Nueva Matrícula) */
     .btn-tesla-main {
         background: var(--tesla-gradient-accent);
         border: none;
@@ -138,12 +123,6 @@
         background: linear-gradient(135deg, #00bcd4 0%, #4fc3f7 100%);
     }
 
-    /* ============================================
-       OVERRIDE: ESTILOS PARA ELEMENTOS GENERADOS POR JS
-       (Badges y Botones de la tabla)
-       ============================================ */
-    
-    /* 1. Badges de Estado (.badge generado por JS) */
     .badge {
         padding: 6px 12px;
         border-radius: 20px;
@@ -152,28 +131,24 @@
         letter-spacing: 0.5px;
     }
 
-    /* Activo (Success) */
     .badge.bg-success {
         background-color: rgba(16, 185, 129, 0.1) !important;
         color: var(--tesla-success) !important;
         border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    /* Inactivo/Error (Danger) */
     .badge.bg-danger {
         background-color: rgba(239, 68, 68, 0.1) !important;
         color: var(--tesla-danger) !important;
         border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
-    /* Anulado (Secondary) */
     .badge.bg-secondary {
         background-color: #f1f5f9 !important;
         color: #64748b !important;
         border: 1px solid #cbd5e1;
     }
 
-    /* 2. Botones de Acción (.btn-outline-primary generado por JS) */
     .btn-outline-primary {
         color: var(--tesla-cyan);
         border-color: var(--tesla-cyan);
@@ -187,7 +162,6 @@
         box-shadow: 0 0 10px rgba(0, 188, 212, 0.4);
     }
 
-    /* 3. Botones de Eliminar (.btn-outline-danger generado por JS) */
     .btn-outline-danger {
         color: var(--tesla-danger);
         border-color: var(--tesla-danger);
@@ -200,7 +174,6 @@
         box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
     }
 
-    /* Ocultar iconos antiguos si es necesario, mantenido de tu código */
     #tablaMatriculas tbody td button:has(.fa-pen),
     #tablaMatriculas .fa-pencil-alt {
         display: none !important;
@@ -208,7 +181,6 @@
 </style>
 
 <div class="container-fluid animate__animated animate__fadeIn p-4">
-    
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <div>
             <h1 class="h3 mb-1 page-header-title">
@@ -224,11 +196,8 @@
     </div>
 
     <div class="card tesla-card mb-4">
-        
         <div class="card-body p-4">
-            
             <div class="row mb-4 align-items-end g-3">
-                
                 <div class="col-md-2 col-sm-12">
                     <label class="small text-muted fw-bold mb-1">Mostrar</label>
                     <select class="form-select form-select-tesla" id="elementosPorPagina" onchange="aplicarFiltrosLocales()">
@@ -255,7 +224,9 @@
                         </span>
                         <input type="text" class="form-control form-control-tesla border-start-0 ps-2" 
                                id="inputBusquedaMatricula" 
-                               placeholder="Buscar por nombre de alumno, apellido o DNI..." 
+                               placeholder="Buscar por nombre (máx 30) o DNI (8 dígitos)..." 
+                               maxlength="30"
+                               oninput="validarEntradaBusqueda(this)"
                                onkeyup="aplicarFiltrosLocales()">
                     </div>
                 </div>
@@ -297,17 +268,15 @@
                 <div class="col-md-7">
                     <nav aria-label="Page navigation">
                         <ul class="pagination justify-content-end mb-0 pagination-sm" id="paginacionMatriculas">
-                            </ul>
+                        </ul>
                     </nav>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <script>
-    // Iniciar script si la función global existe (para cargas dinámicas)
     if (typeof listarMatriculas === 'function') {
         listarMatriculas();
     }

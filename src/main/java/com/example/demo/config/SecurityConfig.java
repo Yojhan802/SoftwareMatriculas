@@ -57,7 +57,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/chat/**").authenticated() // NUEVO
                 // Ejemplo de acceso por roles
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar").hasAnyRole("SECRETARIA", "ADMIN")
+                .requestMatchers("/api/alumnos/**", "/api/matricula/**", "/api/gestion-pagos/**", "/api/pagos/realizar","/api/anulacion/**").hasAnyRole("SECRETARIA", "ADMIN")
                 .requestMatchers("/api/director/**", "/api/2fa/**", "/api/reportes/**", "/api/anulacion/**").hasAnyRole("DIRECTOR", "ADMIN")
                 // Cualquier otra request necesita estar logueado
                 .anyRequest().authenticated()

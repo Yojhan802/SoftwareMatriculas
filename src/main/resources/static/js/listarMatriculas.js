@@ -25,13 +25,28 @@ if (document.getElementById('cuerpoTablaMatriculas')) {
 }
 
 // =========================================================
+// VALIDACIONES DE BÚSQUEDA (NUEVO)
+// =========================================================
+function validarEntradaBusqueda(input) {
+    let valor = input.value;
+
+    // Si empieza con un número, validar como DNI (Solo números, máx 8)
+    if (/^\d/.test(valor)) {
+        input.value = valor.replace(/\D/g, '').substring(0, 8);
+    } 
+    // Si empieza con letras o está vacío, validar como Nombre (Letras y espacios, máx 30)
+    else {
+        input.value = valor.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '').substring(0, 30);
+    }
+}
+
+// =========================================================
 // LÓGICA DE LISTADO (GET)
 // =========================================================
 async function listarMatriculas() {
     const cuerpoTabla = document.getElementById('cuerpoTablaMatriculas');
     if (!cuerpoTabla) return; 
 
-    // Mostrar loading
     cuerpoTabla.innerHTML = `
         <tr>
             <td colspan="10" class="text-center py-4">
@@ -44,15 +59,9 @@ async function listarMatriculas() {
 
     try {
         const response = await fetch(API_URL_MATRICULA);
-
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-
-        // 1. GUARDAMOS LOS DATOS EN MEMORIA
-        todasLasMatriculas = await response.json();
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
         
-        // 2. LLAMAMOS AL FILTRO PARA QUE DIBUJE
+        todasLasMatriculas = await response.json();
         aplicarFiltrosLocales();
 
     } catch (error) {
@@ -62,26 +71,21 @@ async function listarMatriculas() {
 }
 
 // =========================================================
-// LÓGICA DE FILTRADO (NUEVA FUNCIÓN)
+// LÓGICA DE FILTRADO
 // =========================================================
 function aplicarFiltrosLocales() {
-    // 1. Obtener valores de los inputs
-    const filtroEstado = document.getElementById('filtroEstadoMatricula').value; // TODOS, ACTIVO, ANULADO
+    const filtroEstado = document.getElementById('filtroEstadoMatricula').value; 
     const textoBusqueda = document.getElementById('inputBusquedaMatricula').value.toLowerCase().trim();
     const cantidadMostrar = parseInt(document.getElementById('elementosPorPagina').value);
 
-    // 2. Filtrar el array global
     const listaFiltrada = todasLasMatriculas.filter(m => {
-        // A. Filtro de Estado
-        const estadoM = m.estado || 'ACTIVO'; // Asumir activo si es null
+        const estadoM = m.estado || 'ACTIVO';
         const cumpleEstado = (filtroEstado === 'TODOS') || (estadoM === filtroEstado);
 
-        // B. Filtro de Texto (Nombre, Apellido o DNI)
         let textoM = "";
         if (m.nombreAlumno) {
             textoM = `${m.nombreAlumno} ${m.apellidoAlumno} ${m.dni_alumno}`.toLowerCase();
         } else {
-            // Soporte por si el DTO cambia
             textoM = `${m.idAlumno} ${m.dni_alumno}`.toLowerCase();
         }
         const cumpleBusqueda = textoM.includes(textoBusqueda);
@@ -89,10 +93,7 @@ function aplicarFiltrosLocales() {
         return cumpleEstado && cumpleBusqueda;
     });
 
-    // 3. Limitar cantidad (Simulación de paginación simple)
     const listaParaMostrar = listaFiltrada.slice(0, cantidadMostrar);
-
-    // 4. Dibujar
     renderizarTabla(listaParaMostrar);
 }
 
@@ -143,13 +144,12 @@ function renderizarTabla(lista) {
         const estado = m.estado || 'ACTIVO';
         const monto = m.montoMatricula || m.monto_Matricula || 0;
 
-        // --- ESTILOS SEGÚN ESTADO ---
         let badgeClass = 'bg-success';
         let estiloFila = '';
         let btnDisabled = '';
 
         if (estado === 'ANULADO') {
-            badgeClass = 'bg-secondary'; // Gris para anulados
+            badgeClass = 'bg-secondary';
             estiloFila = 'opacity: 0.6; background-color: #f8f9fa;'; 
             btnDisabled = 'disabled';
         } else if (estado !== 'ACTIVO') {
@@ -168,7 +168,6 @@ function renderizarTabla(lista) {
                 <td>S/ ${parseFloat(monto).toFixed(2)}</td>
                 <td><span class="badge ${badgeClass}">${estado}</span></td>
                 <td class="text-center">
-                    
                     <button class="btn btn-sm btn-outline-danger ms-1" 
                             onclick="eliminarMatricula(${id})" 
                             title="Eliminar/Anular" ${btnDisabled}>
@@ -182,14 +181,13 @@ function renderizarTabla(lista) {
 }
 
 // =========================================================
-// LÓGICA DE ELIMINACIÓN INTELIGENTE (TU LÓGICA ORIGINAL)
+// LÓGICA DE ELIMINACIÓN INTELIGENTE
 // =========================================================
 window.eliminarMatricula = async function(id) {
     if (!confirm('⚠️ ¿Estás seguro de procesar esta matrícula?\n\n- Si NO tiene pagos: Se ELIMINARÁ permanentemente.\n- Si TIENE pagos: Se ANULARÁ (conservando historial de pagos).\n\n¿Desea continuar?')) {
         return;
     }
     
-    // Bloqueo visual del botón para evitar doble clic
     const btn = document.querySelector(`button[onclick="eliminarMatricula(${id})"]`);
     if(btn) {
         btn.disabled = true;
@@ -204,11 +202,11 @@ window.eliminarMatricula = async function(id) {
         if (response.ok) {
             const mensaje = await response.text();
             alert(`✅ Operación Exitosa:\n${mensaje}`);
-            listarMatriculas(); // Recargar datos frescos
+            listarMatriculas();
         } else {
             const mensajeError = await response.text();
             alert('❌ Error:\n' + mensajeError);
-            listarMatriculas(); // Recargar para asegurar estado
+            listarMatriculas();
         }
 
     } catch (error) {
@@ -223,4 +221,5 @@ window.editarMatricula = function(id) {
 };
 
 window.listarMatriculas = listarMatriculas;
-window.aplicarFiltrosLocales = aplicarFiltrosLocales; // Exponer para el HTML
+window.aplicarFiltrosLocales = aplicarFiltrosLocales;
+window.validarEntradaBusqueda = validarEntradaBusqueda; // Exponer la nueva función
