@@ -202,9 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
 // =====================================================
 
 const permisos = {
-  ADMIN: { dashboard: true, gestion: true, pagos: true, reportes: true, configuracion: true },
-  SECRETARIA: { dashboard: true, gestion: true, pagos: true, reportes: false, configuracion: true },
-  CAJA: { dashboard: true, gestion: false, pagos: true, reportes: true, configuracion: true },
+  ADMIN: { dashboard: true, gestion: true, pagos: true, reportes: true, configuracion: true, googleauth: false },
+  SECRETARIA: { dashboard: true, gestion: true, pagos: true, reportes: false, configuracion: true, googleauth: false },
+  CAJA: { dashboard: true, gestion: false, pagos: true, reportes: true, configuracion: true, googleauth: false },
   DIRECTOR: { dashboard: true, gestion: false, pagos: false, reportes: true, configuracion: true, googleauth: true }
 };
 
@@ -222,12 +222,31 @@ function aplicarPermisos(rolUsuario) {
     else if(nombre.includes("pagos")) clave = "pagos";
     else if(nombre.includes("reportes")) clave = "reportes";
     else if(nombre.includes("configuración") || nombre.includes("configuracion")) clave = "configuracion";
+    else if(nombre.includes("googleauth") || nombre.includes("googleauth")) clave = "googleauth";
 
     if (clave && secciones[clave] === false) {
       // Ocultamos el título y el UL que le sigue
       title.parentElement.style.display = "none";
     }
   });
+const googleAuthLink = document.querySelector('a[href*="googleauth"], a[onclick*="googleauth"]');
+  
+  if (googleAuthLink) {
+    // Encuentra el elemento <li> padre que contiene el enlace
+    const liElement = googleAuthLink.closest('li');
+    
+    if (liElement) {
+      if (rolUsuario === 'DIRECTOR' && secciones.googleauth === true) {
+        // Mostrar el enlace si es director
+        liElement.style.display = 'block';
+        console.log('✅ Mostrando GoogleAuth para Director');
+      } else {
+        // Ocultar el enlace para otros roles
+        liElement.style.display = 'none';
+        console.log(`❌ Ocultando GoogleAuth para ${rolUsuario}`);
+      }
+    }
+  }
 }
 
 // ================== AUTH LOGIC (DOMContentLoaded) ==================
