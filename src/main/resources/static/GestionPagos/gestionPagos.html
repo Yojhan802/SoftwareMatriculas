@@ -276,12 +276,14 @@
             </label>
             <div class="input-group">
               <input
-                type="text"
-                id="inputBuscarAlumno"
-                class="form-control"
-                placeholder="Ingrese DNI (8 dígitos)"
-                maxlength="8"
-                onkeypress="if(event.key === 'Enter') buscarDeudas()"
+                      type="text"
+                      id="inputBuscarAlumno"
+                      class="form-control"
+                      placeholder="Ingrese DNI (8 dígitos)"
+                      maxlength="8"
+                      inputmode="numeric"
+                      oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                      onkeypress="if(event.key === 'Enter') buscarDeudas()"
               />
               <button class="btn btn-tesla-search" onclick="buscarDeudas()">
                 BUSCAR
