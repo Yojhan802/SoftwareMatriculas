@@ -16,9 +16,13 @@ function initAlumnos() {
   cargarAlumnos();
 
   const searchInput = document.getElementById("searchDni");
-  if (searchInput) {
-    searchInput.addEventListener("input", aplicarFiltros);
-  }
+if (searchInput) {
+  searchInput.addEventListener("input", function(e) {
+    // Eliminar símbolos especiales, permitir solo letras, números y espacios
+    this.value = this.value.replace(/[^a-záéíóúñü0-9\s]/gi, "");
+    aplicarFiltros();
+  });
+}
 
   // Agregar validación de solo números en DNI
   const dniInput = document.getElementById("dniAlumno");
@@ -92,44 +96,47 @@ async function cargarAlumnos() {
 // APLICAR FILTROS (BÚSQUEDA + ESTADO)
 // ---------------------------------------------------------
 function aplicarFiltros() {
-  const searchValue = document
-    .getElementById("searchDni")
-    .value.toLowerCase()
-    .trim();
+  const searchValue = document.getElementById("searchDni").value.trim();
   const filtroEstado = document.getElementById("filtroEstado").value;
-
+  
   // Primero filtrar por estado
   let alumnosFiltradosPorEstado = todosLosAlumnos;
-
+  
   if (filtroEstado === "activos") {
-    alumnosFiltradosPorEstado = todosLosAlumnos.filter((alumno) => {
+    alumnosFiltradosPorEstado = todosLosAlumnos.filter(alumno => {
       const estado = alumno.EstadoActual || alumno.estadoActual;
       return estado === "Activo" || estado === 1;
     });
   } else if (filtroEstado === "inactivos") {
-    alumnosFiltradosPorEstado = todosLosAlumnos.filter((alumno) => {
+    alumnosFiltradosPorEstado = todosLosAlumnos.filter(alumno => {
       const estado = alumno.EstadoActual || alumno.estadoActual;
       return estado !== "Activo" && estado !== 1;
     });
   }
-
+  
   // Luego filtrar por búsqueda
   if (!searchValue) {
     alumnosFiltrados = alumnosFiltradosPorEstado;
   } else {
-    alumnosFiltrados = alumnosFiltradosPorEstado.filter((alumno) => {
-      const dni = alumno.dniAlumno.toString().toLowerCase();
-      const nombre = (alumno.Nombre || "").toLowerCase();
-      const apellido = (alumno.Apellido || "").toLowerCase();
-
-      return (
-        dni.includes(searchValue) ||
-        nombre.includes(searchValue) ||
-        apellido.includes(searchValue)
-      );
+    // Verificar si la búsqueda es solo números (DNI) o texto (Nombre/Apellido)
+    const esSoloNumeros = /^\d+$/.test(searchValue);
+    
+    alumnosFiltrados = alumnosFiltradosPorEstado.filter(alumno => {
+      if (esSoloNumeros) {
+        // Búsqueda por DNI (solo números)
+        const dni = alumno.dniAlumno.toString();
+        return dni.includes(searchValue);
+      } else {
+        // Búsqueda por Nombre/Apellido (texto)
+        const nombre = (alumno.Nombre || "").toLowerCase();
+        const apellido = (alumno.Apellido || "").toLowerCase();
+        const searchLower = searchValue.toLowerCase();
+        
+        return nombre.includes(searchLower) || apellido.includes(searchLower);
+      }
     });
   }
-
+  
   paginaActual = 1;
   renderizarTablaConPaginacion();
 }
