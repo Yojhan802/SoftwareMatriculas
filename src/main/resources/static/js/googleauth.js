@@ -14,9 +14,9 @@ async function generarQr() {
 
       if (response.ok) {
         // Convertimos la URL QR a imagen usando API de Google Charts
-        const qrImg = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(
-          data.qrUrl
-        )}`;
+        const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+  data.qrUrl
+)}`;
         document.getElementById("qrImage").src = qrImg;
         document.getElementById("claveSecreta").textContent = data.claveSecreta;
         document.getElementById("qrContainer").style.display = "block";
