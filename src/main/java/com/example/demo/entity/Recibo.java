@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -23,7 +22,7 @@ public class Recibo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idRecibo;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "id_cuota", nullable = false)
     private Cuota cuota;
 
