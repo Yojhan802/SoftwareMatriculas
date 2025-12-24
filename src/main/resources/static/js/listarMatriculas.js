@@ -168,11 +168,7 @@ function renderizarTabla(lista) {
                 <td>S/ ${parseFloat(monto).toFixed(2)}</td>
                 <td><span class="badge ${badgeClass}">${estado}</span></td>
                 <td class="text-center">
-                    <button class="btn btn-sm btn-outline-primary" 
-                            onclick="editarMatricula(${id})" 
-                            title="Editar" ${btnDisabled}>
-                        <i class="fas fa-edit"></i>
-                    </button>
+                    
                     <button class="btn btn-sm btn-outline-danger ms-1" 
                             onclick="eliminarMatricula(${id})" 
                             title="Eliminar/Anular" ${btnDisabled}>
